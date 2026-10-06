@@ -7,16 +7,21 @@
 .quarto/
 _site/
 .run-lock/
-inputs/data/*
-!inputs/data/.gitkeep
-outputs/metadata/site-failure.txt
-outputs/tables/rq3/
-outputs/tables/archive/
-outputs/reports/rq3.json
-inputs/raw/*
-inputs/final/*
-!inputs/raw/.gitkeep
-!inputs/final/.gitkeep
+# Keep the input folder structure, but never version collected data.
+inputs/data/**
+!inputs/data/**/
+!inputs/data/**/.gitkeep
+inputs/raw/**
+!inputs/raw/**/
+!inputs/raw/**/.gitkeep
+inputs/final/**
+!inputs/final/**/
+!inputs/final/**/.gitkeep
+
+# Outputs are generated; preserve only their directory structure.
+outputs/**
+!outputs/**/
+!outputs/**/.gitkeep
 
 **/*.quarto_ipynb
 
