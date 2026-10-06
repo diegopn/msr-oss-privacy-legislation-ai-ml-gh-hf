@@ -3,7 +3,9 @@ title: "Discussões sobre privacidade em OSS de IA/ML"
 subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
 ---
 
-<div class="hero-note"><p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions de modelos e datasets do Hugging Face.</p></div>
+<div class="hero-note">
+<p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions de modelos e datasets do Hugging Face.</p>
+</div>
 
 ## Estado do projeto {#visao-geral}
 
