@@ -12,16 +12,33 @@ project:
     - /site/favicon.png
 website:
   title: Privacidade em OSS de IA/ML
+  site-url: https://diegopn.github.io/msr-oss-privacy-legislation-ai-ml-gh-hf/
   favicon: site/favicon.png
+  search: false
   navbar:
     title: PRIVACIDADE · IA/ML
+    background: light
+    pinned: true
+    collapse: true
     left:
-      - href: index.qmd
+      - href: "#visao-geral"
         text: Projeto
-      - href: index.qmd#metodologia
+      - href: "#metodologia"
         text: Método
-      - href: index.qmd#reproducao
+      - href: "#dados"
+        text: Amostra
+      - href: "#rq3"
+        text: Etapas · RQ3
+      - href: "#reproducao"
         text: Execução
+      - href: "#limites"
+        text: Limites
+      - href: "#referencias-metodologicas"
+        text: Referências
+    right:
+      - icon: github
+        href: https://github.com/diegopn/msr-oss-privacy-legislation-ai-ml-gh-hf
+        aria-label: GitHub
   page-footer:
     left: Pesquisa em engenharia de software
     right: Corte de coleta · 22/09/2026

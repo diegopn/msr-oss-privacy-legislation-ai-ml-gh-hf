@@ -29,7 +29,19 @@
   "collection_incomplete": "The latest collections do not satisfy the protocol. Scientific results are pending.",
   "analysis_pending": "Collections completed. Run analysis to prepare the human evaluation sample.",
   "ready_for_human_review": "Collection and sampling completed. Human evaluation is pending; categories are not assigned automatically.",
-  "theme_auto": "Theme: system",
-  "theme_light": "Theme: light",
-  "theme_dark": "Theme: dark"
+  "nav_project": "Project",
+  "nav_method": "Method",
+  "nav_sample": "Sample",
+  "nav_rq3": "Stages · RQ3",
+  "nav_execution": "Execution",
+  "nav_limits": "Limitations",
+  "nav_references": "References",
+  "control_group": "Language and theme",
+  "language_button": "Change language to {language}",
+  "language_pt": "Portuguese",
+  "language_en": "English",
+  "theme_button": "Theme: {theme}",
+  "theme_auto": "system",
+  "theme_light": "light",
+  "theme_dark": "dark"
 }
