@@ -1,0 +1,866 @@
+{
+  "source": "https://github.com/spdx/license-list-data",
+  "licenseListVersion": "3.29.0",
+  "snapshot_date": "2026-10-03",
+  "source_sha256": "47d1cc681abe31166b342b6cc4aab13a6ba8ea5c48794697fe3bf8b1dbaf509a",
+  "licenses": [
+    {
+      "id": "0BSD",
+      "name": "BSD Zero Clause License",
+      "hf_filter": "0bsd"
+    },
+    {
+      "id": "AAL",
+      "name": "Attribution Assurance License",
+      "hf_filter": "aal"
+    },
+    {
+      "id": "AFL-1.1",
+      "name": "Academic Free License v1.1",
+      "hf_filter": "afl-1.1"
+    },
+    {
+      "id": "AFL-1.2",
+      "name": "Academic Free License v1.2",
+      "hf_filter": "afl-1.2"
+    },
+    {
+      "id": "AFL-2.0",
+      "name": "Academic Free License v2.0",
+      "hf_filter": "afl-2.0"
+    },
+    {
+      "id": "AFL-2.1",
+      "name": "Academic Free License v2.1",
+      "hf_filter": "afl-2.1"
+    },
+    {
+      "id": "AFL-3.0",
+      "name": "Academic Free License v3.0",
+      "hf_filter": "afl-3.0"
+    },
+    {
+      "id": "AGPL-3.0",
+      "name": "GNU Affero General Public License v3.0",
+      "hf_filter": "agpl-3.0"
+    },
+    {
+      "id": "AGPL-3.0-only",
+      "name": "GNU Affero General Public License v3.0 only",
+      "hf_filter": "agpl-3.0-only"
+    },
+    {
+      "id": "AGPL-3.0-or-later",
+      "name": "GNU Affero General Public License v3.0 or later",
+      "hf_filter": "agpl-3.0-or-later"
+    },
+    {
+      "id": "ALGLIB-Documentation",
+      "name": "ALGLIB Documentation License",
+      "hf_filter": "alglib-documentation"
+    },
+    {
+      "id": "Apache-1.1",
+      "name": "Apache License 1.1",
+      "hf_filter": "apache-1.1"
+    },
+    {
+      "id": "Apache-2.0",
+      "name": "Apache License 2.0",
+      "hf_filter": "apache-2.0"
+    },
+    {
+      "id": "APL-1.0",
+      "name": "Adaptive Public License 1.0",
+      "hf_filter": "apl-1.0"
+    },
+    {
+      "id": "APSL-1.0",
+      "name": "Apple Public Source License 1.0",
+      "hf_filter": "apsl-1.0"
+    },
+    {
+      "id": "APSL-1.1",
+      "name": "Apple Public Source License 1.1",
+      "hf_filter": "apsl-1.1"
+    },
+    {
+      "id": "APSL-1.2",
+      "name": "Apple Public Source License 1.2",
+      "hf_filter": "apsl-1.2"
+    },
+    {
+      "id": "APSL-2.0",
+      "name": "Apple Public Source License 2.0",
+      "hf_filter": "apsl-2.0"
+    },
+    {
+      "id": "Artistic-1.0",
+      "name": "Artistic License 1.0",
+      "hf_filter": "artistic-1.0"
+    },
+    {
+      "id": "Artistic-1.0-cl8",
+      "name": "Artistic License 1.0 w/clause 8",
+      "hf_filter": "artistic-1.0-cl8"
+    },
+    {
+      "id": "Artistic-1.0-Perl",
+      "name": "Artistic License 1.0 (Perl)",
+      "hf_filter": "artistic-1.0-perl"
+    },
+    {
+      "id": "Artistic-2.0",
+      "name": "Artistic License 2.0",
+      "hf_filter": "artistic-2.0"
+    },
+    {
+      "id": "BlueOak-1.0.0",
+      "name": "Blue Oak Model License 1.0.0",
+      "hf_filter": "blueoak-1.0.0"
+    },
+    {
+      "id": "BSD-1-Clause",
+      "name": "BSD 1-Clause License",
+      "hf_filter": "bsd-1-clause"
+    },
+    {
+      "id": "BSD-2-Clause",
+      "name": "BSD 2-Clause \"Simplified\" License",
+      "hf_filter": "bsd-2-clause"
+    },
+    {
+      "id": "BSD-2-Clause-Patent",
+      "name": "BSD-2-Clause Plus Patent License",
+      "hf_filter": "bsd-2-clause-patent"
+    },
+    {
+      "id": "BSD-3-Clause",
+      "name": "BSD 3-Clause \"New\" or \"Revised\" License",
+      "hf_filter": "bsd-3-clause"
+    },
+    {
+      "id": "BSD-3-Clause-LBNL",
+      "name": "Lawrence Berkeley National Labs BSD variant license",
+      "hf_filter": "bsd-3-clause-lbnl"
+    },
+    {
+      "id": "BSD-3-Clause-Open-MPI",
+      "name": "BSD 3-Clause Open MPI variant",
+      "hf_filter": "bsd-3-clause-open-mpi"
+    },
+    {
+      "id": "BSD-ask-to-endorse",
+      "name": "BSD - ask to endorse",
+      "hf_filter": "bsd-ask-to-endorse"
+    },
+    {
+      "id": "BSL-1.0",
+      "name": "Boost Software License 1.0",
+      "hf_filter": "bsl-1.0"
+    },
+    {
+      "id": "CAL-1.0",
+      "name": "Cryptographic Autonomy License 1.0",
+      "hf_filter": "cal-1.0"
+    },
+    {
+      "id": "CAL-1.0-Combined-Work-Exception",
+      "name": "Cryptographic Autonomy License 1.0 (Combined Work Exception)",
+      "hf_filter": "cal-1.0-combined-work-exception"
+    },
+    {
+      "id": "CATOSL-1.1",
+      "name": "Computer Associates Trusted Open Source License 1.1",
+      "hf_filter": "catosl-1.1"
+    },
+    {
+      "id": "CDDL-1.0",
+      "name": "Common Development and Distribution License 1.0",
+      "hf_filter": "cddl-1.0"
+    },
+    {
+      "id": "CDDL-1.1",
+      "name": "Common Development and Distribution License 1.1",
+      "hf_filter": "cddl-1.1"
+    },
+    {
+      "id": "CECILL-2.1",
+      "name": "CeCILL Free Software License Agreement v2.1",
+      "hf_filter": "cecill-2.1"
+    },
+    {
+      "id": "CERN-OHL-P-2.0",
+      "name": "CERN Open Hardware Licence Version 2 - Permissive",
+      "hf_filter": "cern-ohl-p-2.0"
+    },
+    {
+      "id": "CERN-OHL-S-2.0",
+      "name": "CERN Open Hardware Licence Version 2 - Strongly Reciprocal",
+      "hf_filter": "cern-ohl-s-2.0"
+    },
+    {
+      "id": "CERN-OHL-W-2.0",
+      "name": "CERN Open Hardware Licence Version 2 - Weakly Reciprocal",
+      "hf_filter": "cern-ohl-w-2.0"
+    },
+    {
+      "id": "CNRI-Python",
+      "name": "CNRI Python License",
+      "hf_filter": "cnri-python"
+    },
+    {
+      "id": "CNRI-Python-GPL-Compatible",
+      "name": "CNRI Python Open Source GPL Compatible License Agreement",
+      "hf_filter": "cnri-python-gpl-compatible"
+    },
+    {
+      "id": "CPAL-1.0",
+      "name": "Common Public Attribution License 1.0",
+      "hf_filter": "cpal-1.0"
+    },
+    {
+      "id": "CPL-1.0",
+      "name": "Common Public License 1.0",
+      "hf_filter": "cpl-1.0"
+    },
+    {
+      "id": "CUA-OPL-1.0",
+      "name": "CUA Office Public License v1.0",
+      "hf_filter": "cua-opl-1.0"
+    },
+    {
+      "id": "curl",
+      "name": "curl License",
+      "hf_filter": "curl"
+    },
+    {
+      "id": "ECL-1.0",
+      "name": "Educational Community License v1.0",
+      "hf_filter": "ecl-1.0"
+    },
+    {
+      "id": "ECL-2.0",
+      "name": "Educational Community License v2.0",
+      "hf_filter": "ecl-2.0"
+    },
+    {
+      "id": "EFL-1.0",
+      "name": "Eiffel Forum License v1.0",
+      "hf_filter": "efl-1.0"
+    },
+    {
+      "id": "EFL-2.0",
+      "name": "Eiffel Forum License v2.0",
+      "hf_filter": "efl-2.0"
+    },
+    {
+      "id": "Entessa",
+      "name": "Entessa Public License v1.0",
+      "hf_filter": "entessa"
+    },
+    {
+      "id": "EPL-1.0",
+      "name": "Eclipse Public License 1.0",
+      "hf_filter": "epl-1.0"
+    },
+    {
+      "id": "EPL-2.0",
+      "name": "Eclipse Public License 2.0",
+      "hf_filter": "epl-2.0"
+    },
+    {
+      "id": "EUDatagrid",
+      "name": "EU DataGrid Software License",
+      "hf_filter": "eudatagrid"
+    },
+    {
+      "id": "EUPL-1.1",
+      "name": "European Union Public License 1.1",
+      "hf_filter": "eupl-1.1"
+    },
+    {
+      "id": "EUPL-1.2",
+      "name": "European Union Public License 1.2",
+      "hf_filter": "eupl-1.2"
+    },
+    {
+      "id": "Fair",
+      "name": "Fair License",
+      "hf_filter": "fair"
+    },
+    {
+      "id": "Frameworx-1.0",
+      "name": "Frameworx Open License 1.0",
+      "hf_filter": "frameworx-1.0"
+    },
+    {
+      "id": "GPL-2.0",
+      "name": "GNU General Public License v2.0 only",
+      "hf_filter": "gpl-2.0"
+    },
+    {
+      "id": "GPL-2.0+",
+      "name": "GNU General Public License v2.0 or later",
+      "hf_filter": "gpl-2.0+"
+    },
+    {
+      "id": "GPL-2.0-only",
+      "name": "GNU General Public License v2.0 only",
+      "hf_filter": "gpl-2.0-only"
+    },
+    {
+      "id": "GPL-2.0-or-later",
+      "name": "GNU General Public License v2.0 or later",
+      "hf_filter": "gpl-2.0-or-later"
+    },
+    {
+      "id": "GPL-3.0",
+      "name": "GNU General Public License v3.0 only",
+      "hf_filter": "gpl-3.0"
+    },
+    {
+      "id": "GPL-3.0+",
+      "name": "GNU General Public License v3.0 or later",
+      "hf_filter": "gpl-3.0+"
+    },
+    {
+      "id": "GPL-3.0-only",
+      "name": "GNU General Public License v3.0 only",
+      "hf_filter": "gpl-3.0-only"
+    },
+    {
+      "id": "GPL-3.0-or-later",
+      "name": "GNU General Public License v3.0 or later",
+      "hf_filter": "gpl-3.0-or-later"
+    },
+    {
+      "id": "GPL-3.0-with-GCC-exception",
+      "name": "GNU General Public License v3.0 w/GCC Runtime Library exception",
+      "hf_filter": "gpl-3.0-with-gcc-exception"
+    },
+    {
+      "id": "HPND",
+      "name": "Historical Permission Notice and Disclaimer",
+      "hf_filter": "hpnd"
+    },
+    {
+      "id": "ICU",
+      "name": "ICU License",
+      "hf_filter": "icu"
+    },
+    {
+      "id": "Intel",
+      "name": "Intel Open Source License",
+      "hf_filter": "intel"
+    },
+    {
+      "id": "IPA",
+      "name": "IPA Font License",
+      "hf_filter": "ipa"
+    },
+    {
+      "id": "IPL-1.0",
+      "name": "IBM Public License v1.0",
+      "hf_filter": "ipl-1.0"
+    },
+    {
+      "id": "ISC",
+      "name": "ISC License",
+      "hf_filter": "isc"
+    },
+    {
+      "id": "Jam",
+      "name": "Jam License",
+      "hf_filter": "jam"
+    },
+    {
+      "id": "LGPL-2.0",
+      "name": "GNU Library General Public License v2 only",
+      "hf_filter": "lgpl-2.0"
+    },
+    {
+      "id": "LGPL-2.0+",
+      "name": "GNU Library General Public License v2 or later",
+      "hf_filter": "lgpl-2.0+"
+    },
+    {
+      "id": "LGPL-2.0-only",
+      "name": "GNU Library General Public License v2 only",
+      "hf_filter": "lgpl-2.0-only"
+    },
+    {
+      "id": "LGPL-2.0-or-later",
+      "name": "GNU Library General Public License v2 or later",
+      "hf_filter": "lgpl-2.0-or-later"
+    },
+    {
+      "id": "LGPL-2.1",
+      "name": "GNU Lesser General Public License v2.1 only",
+      "hf_filter": "lgpl-2.1"
+    },
+    {
+      "id": "LGPL-2.1+",
+      "name": "GNU Lesser General Public License v2.1 or later",
+      "hf_filter": "lgpl-2.1+"
+    },
+    {
+      "id": "LGPL-2.1-only",
+      "name": "GNU Lesser General Public License v2.1 only",
+      "hf_filter": "lgpl-2.1-only"
+    },
+    {
+      "id": "LGPL-2.1-or-later",
+      "name": "GNU Lesser General Public License v2.1 or later",
+      "hf_filter": "lgpl-2.1-or-later"
+    },
+    {
+      "id": "LGPL-3.0",
+      "name": "GNU Lesser General Public License v3.0 only",
+      "hf_filter": "lgpl-3.0"
+    },
+    {
+      "id": "LGPL-3.0+",
+      "name": "GNU Lesser General Public License v3.0 or later",
+      "hf_filter": "lgpl-3.0+"
+    },
+    {
+      "id": "LGPL-3.0-only",
+      "name": "GNU Lesser General Public License v3.0 only",
+      "hf_filter": "lgpl-3.0-only"
+    },
+    {
+      "id": "LGPL-3.0-or-later",
+      "name": "GNU Lesser General Public License v3.0 or later",
+      "hf_filter": "lgpl-3.0-or-later"
+    },
+    {
+      "id": "LiLiQ-P-1.1",
+      "name": "Licence Libre du Qu\u00e9bec \u2013 Permissive version 1.1",
+      "hf_filter": "liliq-p-1.1"
+    },
+    {
+      "id": "LiLiQ-R-1.1",
+      "name": "Licence Libre du Qu\u00e9bec \u2013 R\u00e9ciprocit\u00e9 version 1.1",
+      "hf_filter": "liliq-r-1.1"
+    },
+    {
+      "id": "LiLiQ-Rplus-1.1",
+      "name": "Licence Libre du Qu\u00e9bec \u2013 R\u00e9ciprocit\u00e9 forte version 1.1",
+      "hf_filter": "liliq-rplus-1.1"
+    },
+    {
+      "id": "LPL-1.0",
+      "name": "Lucent Public License Version 1.0",
+      "hf_filter": "lpl-1.0"
+    },
+    {
+      "id": "LPL-1.02",
+      "name": "Lucent Public License v1.02",
+      "hf_filter": "lpl-1.02"
+    },
+    {
+      "id": "LPPL-1.3c",
+      "name": "LaTeX Project Public License v1.3c",
+      "hf_filter": "lppl-1.3c"
+    },
+    {
+      "id": "MirOS",
+      "name": "The MirOS Licence",
+      "hf_filter": "miros"
+    },
+    {
+      "id": "MIT",
+      "name": "MIT License",
+      "hf_filter": "mit"
+    },
+    {
+      "id": "MIT-0",
+      "name": "MIT No Attribution",
+      "hf_filter": "mit-0"
+    },
+    {
+      "id": "MIT-Modern-Variant",
+      "name": "MIT License Modern Variant",
+      "hf_filter": "mit-modern-variant"
+    },
+    {
+      "id": "Motosoto",
+      "name": "Motosoto License",
+      "hf_filter": "motosoto"
+    },
+    {
+      "id": "MPL-1.0",
+      "name": "Mozilla Public License 1.0",
+      "hf_filter": "mpl-1.0"
+    },
+    {
+      "id": "MPL-1.1",
+      "name": "Mozilla Public License 1.1",
+      "hf_filter": "mpl-1.1"
+    },
+    {
+      "id": "MPL-2.0",
+      "name": "Mozilla Public License 2.0",
+      "hf_filter": "mpl-2.0"
+    },
+    {
+      "id": "MPL-2.0-no-copyleft-exception",
+      "name": "Mozilla Public License 2.0 (no copyleft exception)",
+      "hf_filter": "mpl-2.0-no-copyleft-exception"
+    },
+    {
+      "id": "MS-PL",
+      "name": "Microsoft Public License",
+      "hf_filter": "ms-pl"
+    },
+    {
+      "id": "MS-RL",
+      "name": "Microsoft Reciprocal License",
+      "hf_filter": "ms-rl"
+    },
+    {
+      "id": "MulanPSL-2.0",
+      "name": "Mulan Permissive Software License, Version 2",
+      "hf_filter": "mulanpsl-2.0"
+    },
+    {
+      "id": "Multics",
+      "name": "Multics License",
+      "hf_filter": "multics"
+    },
+    {
+      "id": "NASA-1.3",
+      "name": "NASA Open Source Agreement 1.3",
+      "hf_filter": "nasa-1.3"
+    },
+    {
+      "id": "Naumen",
+      "name": "Naumen Public License",
+      "hf_filter": "naumen"
+    },
+    {
+      "id": "NCSA",
+      "name": "University of Illinois/NCSA Open Source License",
+      "hf_filter": "ncsa"
+    },
+    {
+      "id": "NGPL",
+      "name": "Nethack General Public License",
+      "hf_filter": "ngpl"
+    },
+    {
+      "id": "Nokia",
+      "name": "Nokia Open Source License",
+      "hf_filter": "nokia"
+    },
+    {
+      "id": "NPOSL-3.0",
+      "name": "Non-Profit Open Software License 3.0",
+      "hf_filter": "nposl-3.0"
+    },
+    {
+      "id": "NTP",
+      "name": "NTP License",
+      "hf_filter": "ntp"
+    },
+    {
+      "id": "OCLC-2.0",
+      "name": "OCLC Research Public License 2.0",
+      "hf_filter": "oclc-2.0"
+    },
+    {
+      "id": "OFL-1.1",
+      "name": "SIL Open Font License 1.1",
+      "hf_filter": "ofl-1.1"
+    },
+    {
+      "id": "OFL-1.1-no-RFN",
+      "name": "SIL Open Font License 1.1 with no Reserved Font Name",
+      "hf_filter": "ofl-1.1-no-rfn"
+    },
+    {
+      "id": "OFL-1.1-RFN",
+      "name": "SIL Open Font License 1.1 with Reserved Font Name",
+      "hf_filter": "ofl-1.1-rfn"
+    },
+    {
+      "id": "OGTSL",
+      "name": "Open Group Test Suite License",
+      "hf_filter": "ogtsl"
+    },
+    {
+      "id": "OLDAP-2.8",
+      "name": "Open LDAP Public License v2.8",
+      "hf_filter": "oldap-2.8"
+    },
+    {
+      "id": "OLFL-1.3",
+      "name": "Open Logistics Foundation License Version 1.3",
+      "hf_filter": "olfl-1.3"
+    },
+    {
+      "id": "OSC-1.0",
+      "name": "OSC License 1.0",
+      "hf_filter": "osc-1.0"
+    },
+    {
+      "id": "OSET-PL-2.1",
+      "name": "OSET Public License version 2.1",
+      "hf_filter": "oset-pl-2.1"
+    },
+    {
+      "id": "OSL-1.0",
+      "name": "Open Software License 1.0",
+      "hf_filter": "osl-1.0"
+    },
+    {
+      "id": "OSL-2.0",
+      "name": "Open Software License 2.0",
+      "hf_filter": "osl-2.0"
+    },
+    {
+      "id": "OSL-2.1",
+      "name": "Open Software License 2.1",
+      "hf_filter": "osl-2.1"
+    },
+    {
+      "id": "OSL-3.0",
+      "name": "Open Software License 3.0",
+      "hf_filter": "osl-3.0"
+    },
+    {
+      "id": "PHP-3.0",
+      "name": "PHP License v3.0",
+      "hf_filter": "php-3.0"
+    },
+    {
+      "id": "PHP-3.01",
+      "name": "PHP License v3.01",
+      "hf_filter": "php-3.01"
+    },
+    {
+      "id": "PostgreSQL",
+      "name": "PostgreSQL License",
+      "hf_filter": "postgresql"
+    },
+    {
+      "id": "Python-2.0",
+      "name": "Python License 2.0",
+      "hf_filter": "python-2.0"
+    },
+    {
+      "id": "Python-2.0.1",
+      "name": "Python License 2.0.1",
+      "hf_filter": "python-2.0.1"
+    },
+    {
+      "id": "QPL-1.0",
+      "name": "Q Public License 1.0",
+      "hf_filter": "qpl-1.0"
+    },
+    {
+      "id": "RPL-1.1",
+      "name": "Reciprocal Public License 1.1",
+      "hf_filter": "rpl-1.1"
+    },
+    {
+      "id": "RPL-1.5",
+      "name": "Reciprocal Public License 1.5",
+      "hf_filter": "rpl-1.5"
+    },
+    {
+      "id": "RPSL-1.0",
+      "name": "RealNetworks Public Source License v1.0",
+      "hf_filter": "rpsl-1.0"
+    },
+    {
+      "id": "RSCPL",
+      "name": "Ricoh Source Code Public License",
+      "hf_filter": "rscpl"
+    },
+    {
+      "id": "SimPL-2.0",
+      "name": "Simple Public License 2.0",
+      "hf_filter": "simpl-2.0"
+    },
+    {
+      "id": "SISSL",
+      "name": "Sun Industry Standards Source License v1.1",
+      "hf_filter": "sissl"
+    },
+    {
+      "id": "Sleepycat",
+      "name": "Sleepycat License",
+      "hf_filter": "sleepycat"
+    },
+    {
+      "id": "SPL-1.0",
+      "name": "Sun Public License v1.0",
+      "hf_filter": "spl-1.0"
+    },
+    {
+      "id": "UCL-1.0",
+      "name": "Upstream Compatibility License v1.0",
+      "hf_filter": "ucl-1.0"
+    },
+    {
+      "id": "Unicode-3.0",
+      "name": "Unicode License v3",
+      "hf_filter": "unicode-3.0"
+    },
+    {
+      "id": "Unicode-DFS-2016",
+      "name": "Unicode License Agreement - Data Files and Software (2016)",
+      "hf_filter": "unicode-dfs-2016"
+    },
+    {
+      "id": "Unlicense",
+      "name": "The Unlicense",
+      "hf_filter": "unlicense"
+    },
+    {
+      "id": "UPL-1.0",
+      "name": "Universal Permissive License v1.0",
+      "hf_filter": "upl-1.0"
+    },
+    {
+      "id": "VSL-1.0",
+      "name": "Vovida Software License v1.0",
+      "hf_filter": "vsl-1.0"
+    },
+    {
+      "id": "W3C",
+      "name": "W3C Software Notice and License (2002-12-31)",
+      "hf_filter": "w3c"
+    },
+    {
+      "id": "W3C-20150513",
+      "name": "W3C Software Notice and Document License (2015-05-13)",
+      "hf_filter": "w3c-20150513"
+    },
+    {
+      "id": "Watcom-1.0",
+      "name": "Sybase Open Watcom Public License 1.0",
+      "hf_filter": "watcom-1.0"
+    },
+    {
+      "id": "WordNet",
+      "name": "WordNet License",
+      "hf_filter": "wordnet"
+    },
+    {
+      "id": "wxWindows",
+      "name": "wxWindows Library License",
+      "hf_filter": "wxwindows"
+    },
+    {
+      "id": "Xnet",
+      "name": "X.Net License",
+      "hf_filter": "xnet"
+    },
+    {
+      "id": "Zlib",
+      "name": "zlib License",
+      "hf_filter": "zlib"
+    },
+    {
+      "id": "ZPL-2.0",
+      "name": "Zope Public License 2.0",
+      "hf_filter": "zpl-2.0"
+    },
+    {
+      "id": "ZPL-2.1",
+      "name": "Zope Public License 2.1",
+      "hf_filter": "zpl-2.1"
+    }
+  ],
+  "exceptions": [
+    "389-exception",
+    "Asterisk-exception",
+    "Asterisk-linking-protocols-exception",
+    "Autoconf-exception-2.0",
+    "Autoconf-exception-3.0",
+    "Autoconf-exception-generic",
+    "Autoconf-exception-generic-3.0",
+    "Autoconf-exception-macro",
+    "Bison-exception-1.24",
+    "Bison-exception-2.2",
+    "Bootloader-exception",
+    "CGAL-linking-exception",
+    "Classpath-exception-2.0",
+    "Classpath-exception-2.0-short",
+    "CLISP-exception-2.0",
+    "cryptsetup-OpenSSL-exception",
+    "Digia-Qt-LGPL-exception-1.1",
+    "DigiRule-FOSS-exception",
+    "eCos-exception-2.0",
+    "erlang-otp-linking-exception",
+    "Fawkes-Runtime-exception",
+    "FLTK-exception",
+    "fmt-exception",
+    "Font-exception-2.0",
+    "freertos-exception-2.0",
+    "GCC-exception-2.0",
+    "GCC-exception-2.0-note",
+    "GCC-exception-3.1",
+    "Gmsh-exception",
+    "GNAT-exception",
+    "GNOME-examples-exception",
+    "GNU-compiler-exception",
+    "gnu-javamail-exception",
+    "Google-Patent-WebM",
+    "GPL-3.0-389-ds-base-exception",
+    "GPL-3.0-interface-exception",
+    "GPL-3.0-linking-exception",
+    "GPL-3.0-linking-source-exception",
+    "GPL-CC-1.0",
+    "GStreamer-exception-2005",
+    "GStreamer-exception-2008",
+    "harbour-exception",
+    "i2p-gpl-java-exception",
+    "Independent-modules-exception",
+    "KiCad-libraries-exception",
+    "kvirc-openssl-exception",
+    "LGPL-3.0-linking-exception",
+    "libpri-OpenH323-exception",
+    "Libtool-exception",
+    "Linux-syscall-note",
+    "LLGPL",
+    "LLVM-exception",
+    "LZMA-exception",
+    "mif-exception",
+    "mxml-exception",
+    "Nokia-Qt-exception-1.1",
+    "OCaml-LGPL-linking-exception",
+    "OCCT-exception-1.0",
+    "OpenJDK-assembly-exception-1.0",
+    "openvpn-openssl-exception",
+    "PCRE2-exception",
+    "polyparse-exception",
+    "PS-or-PDF-font-exception-20170817",
+    "QPL-1.0-INRIA-2004-exception",
+    "Qt-GPL-exception-1.0",
+    "Qt-LGPL-exception-1.1",
+    "Qwt-exception-1.0",
+    "romic-exception",
+    "RRDtool-FLOSS-exception-2.0",
+    "rsync-linking-exception",
+    "SANE-exception",
+    "SHL-2.0",
+    "SHL-2.1",
+    "Simple-Library-Usage-exception",
+    "Spelling-Provider-LGPL-exception",
+    "sqlitestudio-OpenSSL-exception",
+    "stunnel-exception",
+    "SWI-exception",
+    "Swift-exception",
+    "Texinfo-exception",
+    "u-boot-exception-2.0",
+    "UBDL-exception",
+    "Universal-FOSS-exception-1.0",
+    "vsftpd-openssl-exception",
+    "WxWindows-exception-3.1",
+    "x11vnc-openssl-exception"
+  ]
+}

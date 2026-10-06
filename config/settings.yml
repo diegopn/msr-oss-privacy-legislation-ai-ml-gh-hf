@@ -1,0 +1,89 @@
+protocol:
+  version: "1.1.0"
+  cutoff: "2026-09-22"
+  laws:
+    - id: GDPR
+      start: "2016-04-14"
+      terms: [GDPR, General Data Protection Regulation]
+    - id: CCPA
+      start: "2018-06-28"
+      terms: [CCPA, California Consumer Privacy Act]
+    - id: CPRA
+      start: "2020-11-03"
+      terms: [CPRA, California Privacy Rights Act]
+    - id: Data Protection Act
+      start: "2018-05-23"
+      terms: [Data Protection Act]
+eligibility:
+  accept_forks: true
+  accept_archived: true
+  osi_file: config/osi-licenses.json
+  hf_bot_accounts: [parquet-converter]
+ai:
+  topics_source: user-supplied-2026-10-03
+  topics:
+    - artificial-intelligence
+    - deep-learning
+    - machine-learning
+    - deep-neural-network
+    - reinforcement-learning
+    - computer-vision
+    - image-processing
+    - neural-network
+    - image-classification
+    - convolutional-neural-networks
+    - object-detection
+    - machine-intelligence
+    - natural-language-processing
+    - nlp
+    - large-language-model
+    - large-language-models
+    - llm
+    - transformer
+    - transformers
+    - generative-ai
+    - diffusion
+    - multimodal
+    - retrieval-augmented-generation
+    - ai-agents
+  # Vocabulários complementares explícitos; revisar com o protocolo da pesquisa.
+  terms: [artificial intelligence, machine learning, deep learning, neural network, reinforcement learning, computer vision, natural language processing, large language model, llm, nlp, generative ai, diffusion, multimodal, retrieval augmented generation, ai agents]
+  libraries: [torch, pytorch, tensorflow, keras, scikit-learn, sklearn, transformers, diffusers, sentence-transformers, xgboost, lightgbm, catboost, jax, flax, mxnet, caffe, onnx, ray, mlflow, caret, tidymodels, h2o]
+  production_signals: [fit, train, train_step, save_pretrained, save_model]
+  consumption_signals: [predict, inference, from_pretrained, load_model, generate]
+  manifests: [requirements.txt, pyproject.toml, setup.py, setup.cfg, Pipfile, environment.yml, environment.yaml, package.json, Cargo.toml, DESCRIPTION, Project.toml]
+  hf_tasks: [text-classification, token-classification, text-generation, text2text-generation, question-answering, translation, summarization, fill-mask, feature-extraction, sentence-similarity, image-classification, object-detection, image-segmentation, image-to-text, text-to-image, image-to-image, automatic-speech-recognition, text-to-speech, audio-classification, reinforcement-learning, tabular-classification, tabular-regression, video-classification, visual-question-answering, document-question-answering, zero-shot-classification, zero-shot-image-classification, depth-estimation, image-feature-extraction, text-to-video]
+  hf_libraries: [transformers, diffusers, sentence-transformers, timm, pytorch, tensorflow, keras, sklearn, scikit-learn, spacy, flair, fastai, peft, onnx, safetensors, datasets]
+references:
+  concepts: config/privacy-concepts.yml
+  taxonomy: config/taxonomy.yml
+http:
+  page_size: 100
+  timeout: 30
+  attempts: 5
+  retry_budget: 180
+  github_search_interval: 2.2
+  github_quota_budget: 21600
+  hf_intervals: {api: 0.32, resolvers: 0.11, pages: 1.6}
+  hf_quota_retries: 5
+  hf_quota_budget: 1800
+sampling:
+  confidence: 0.99
+  margin: 0.05
+  proportion: 0.5
+  seed: 20260920
+  reviewers: [reviewer_1, reviewer_2]
+pilot:
+  github_results_per_term: 100
+  github_repositories: 20
+  github_issues: 100
+  github_comments: 20
+  hf_discovered_per_type: 50
+  hf_eligible_per_type: 10
+  hf_discussions_per_repo: 20
+paths:
+  database: inputs/data/research.sqlite
+  pilot_database: inputs/data/pilot/pilot.sqlite
+  raw: inputs/raw
+  archive: inputs/data/archive
+  analysis: inputs/final/collection

@@ -1,0 +1,954 @@
+{
+  "reviewed": true,
+  "source": "https://github.com/gkapi/github-privacy-law-issues-analysis/tree/eeccde00898a56d603748590fd5ce06fc05cba45",
+  "normalization": "CSV allkeywords; whitespace trimmed; blank rows omitted; missing revisions stay empty; original spelling retained.",
+  "concepts": [
+    {
+      "id": "accountability",
+      "label": "accountability",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-accountability.csv",
+        "terms": [
+          "Accountability",
+          "accountable"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "accuracy",
+      "label": "accuracy",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-accuracy.csv",
+        "terms": [
+          "accuracy",
+          "accuracy of personal data",
+          "kept up-to-date"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "consent",
+      "label": "consent",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-consent.csv",
+        "terms": [
+          "consent",
+          "opt in",
+          "opt-in",
+          "user Consent",
+          "give consent",
+          "provide consent",
+          "users consent",
+          "gives consent",
+          "to consent",
+          "user's consent",
+          "users' consent",
+          "grant permission"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "cookies",
+      "label": "cookies",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-cookies.csv",
+        "terms": [
+          "cookie",
+          "cookie banner"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "data-minimization",
+      "label": "data minimization",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-data-minimization.csv",
+        "terms": [
+          "data minimization",
+          "data minimisation",
+          "collect the minimum amount of data",
+          "collect minimum amount of data",
+          "collect minimum data",
+          "collection of minimum",
+          "minimisation of data",
+          "minimization of data"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-data-minimization-GPT-revised.csv",
+        "terms": [
+          "data minimization compliance",
+          "minimize data collection",
+          "collect only necessary data",
+          "limit data fields collected",
+          "restrict data attributes",
+          "minimal data capture",
+          "strip non-essential fields",
+          "optimize data schema for minimization",
+          "minimization review workflow",
+          "data field audit for minimization",
+          "PII minimization check",
+          "prevent over-collection of PII",
+          "minimize logging of user data",
+          "PII-safe logging",
+          "logging minimization rules",
+          "minimize retention scope"
+        ]
+      }
+    },
+    {
+      "id": "integrity-confidentality",
+      "label": "integrity confidentality",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-integrity-confidentality.csv",
+        "terms": [
+          "Integrity",
+          "Confidentiality",
+          "confidential"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "lawfulness-fairness-transparency",
+      "label": "lawfulness fairness transparency",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-lawfulness-fairness-transparency.csv",
+        "terms": [
+          "lawfulness, fairness and transparency",
+          "lawfulness",
+          "fairness",
+          "transparency",
+          "lawful",
+          "transparent",
+          "Lawfulness of Processing"
+        ]
+      },
+      "revised": {
+        "source": null,
+        "terms": [],
+        "availability": "not-provided-by-source"
+      }
+    },
+    {
+      "id": "purpose-limitation",
+      "label": "purpose limitation",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-purpose-limitation.csv",
+        "terms": [
+          "purpose limitation",
+          "limit the purpose"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-purpose-limitation-GPT-revised.csv",
+        "terms": [
+          "purpose limitation compliance",
+          "purpose-bound processing",
+          "purpose-based data restrictions",
+          "enforce processing purpose",
+          "purpose validation logic",
+          "validate data use purpose",
+          "check processing purpose before use",
+          "enforce declared processing purpose",
+          "block out-of-scope data use",
+          "ensure data used only for original purpose",
+          "tag data with declared purpose",
+          "trace data use to original purpose",
+          "track purpose lineage",
+          "purpose-aware data flow mapping",
+          "purpose-bound data retention policy",
+          "purpose-specific storage rules",
+          "ensure API requests include purpose",
+          "dynamic purpose enforcement at runtime"
+        ]
+      }
+    },
+    {
+      "id": "right-to-access",
+      "label": "right to access",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-access.csv",
+        "terms": [
+          "Right of Access",
+          "Right To Access",
+          "right of disclosure",
+          "right to disclosure",
+          "right to disclose",
+          "Access Personal Data",
+          "Access Your Personal Data",
+          "Access their Personal Data",
+          "Access his Personal Data",
+          "Access her Personal Data",
+          "Access your data",
+          "Access their data",
+          "Access his data",
+          "Access her data",
+          "Access Your Personal Information",
+          "Access their Personal Information",
+          "Access his Personal Information",
+          "Access her Personal Information",
+          "Access Personal Information",
+          "accessing data",
+          "obtain a Copy",
+          "Request a Copy",
+          "request and receive information",
+          "Request access",
+          "Access data",
+          "right access",
+          "data access",
+          "access right",
+          "to access",
+          "receive data",
+          "request his data",
+          "request her data",
+          "request their data",
+          "request data",
+          "access information",
+          "request information",
+          "request her data",
+          "request their data"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-access-GPT-revised.csv",
+        "terms": [
+          "user data export",
+          "export user profile data",
+          "export personal data",
+          "generate user data dump",
+          "build user data export tool",
+          "data export endpoint",
+          "download-my-data feature",
+          "data download endpoint",
+          "account data download",
+          "access request endpoint",
+          "retrieve stored user data",
+          "data retrieval endpoint",
+          "surface all user records",
+          "return all stored attributes",
+          "expose stored user fields",
+          "compile user data package",
+          "assemble user data bundle",
+          "generate downloadable JSON of user data",
+          "generate downloadable CSV of user data",
+          "user data extraction job",
+          "export all user-related rows",
+          "query full user data footprint",
+          "collect all user-linked records",
+          "support SAR (subject access request)",
+          "handle SAR request",
+          "process data access ticket",
+          "implement subject access flow",
+          "add SAR automation",
+          "add access request workflow",
+          "enumerate all stored user data",
+          "data visibility for access request",
+          "request user data snapshot",
+          "generate user data report",
+          "receive personal data",
+          "receive data",
+          "request to get user data",
+          "receive user data",
+          "view personal data",
+          "show account data",
+          "see the data we have on user",
+          "give a copy of what we store"
+        ]
+      }
+    },
+    {
+      "id": "right-to-avoid-automated-decision-making",
+      "label": "right to avoid automated decision making",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-avoid-automated-decision-making.csv",
+        "terms": [
+          "avoid Automated Decision-Making",
+          "avoid Automated Decision Making",
+          "Avoiding Automated Decision-Making",
+          "rejecting Automated Decision-Making",
+          "know about automated decision making",
+          "know automated decision making",
+          "limit use of sensitive personal information",
+          "limit right"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-avoid-automated-decision-making-GPT-revised.csv",
+        "terms": [
+          "disable automated decision making",
+          "disable automated decisions for user",
+          "opt-out of automated decisions",
+          "opt-out of profiling algorithms",
+          "disable profiling engine for user",
+          "suspend automated evaluation",
+          "add \"no automated processing\" flag",
+          "automated decision opt-out flag",
+          "respect no-automation flag",
+          "disable automated recommendations",
+          "remove user from ranking algorithms",
+          "prevent auto-personalization",
+          "implement no-automated-decision endpoint",
+          "handle automated decision avoidance request",
+          "support GDPR Art 22 workflow",
+          "disable inference models for user"
+        ]
+      }
+    },
+    {
+      "id": "right-to-data-portability",
+      "label": "right to data portability",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-data-portability.csv",
+        "terms": [
+          "Right to Data Portability",
+          "Right of Data Portability",
+          "Right of Portability",
+          "Right to Portability",
+          "data portability",
+          "Transmit Those Data",
+          "Transmit your Data",
+          "Transmit their Data",
+          "Transmit his Data",
+          "Transmit her Data",
+          "Transmit Personal Data",
+          "Transmit user Data",
+          "Transmit Data",
+          "data transmission",
+          "Transmit Personal Data",
+          "portability of data",
+          "Request the transfer of personal data",
+          "Request the transfer of data",
+          "Right to Receive the Personal Data",
+          "Right to Receive Personal Data",
+          "Right to Receive a Subset of the Personal Data",
+          "Right to receive a copy of personal information"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-data-portability-GPT-revised.csv",
+        "terms": [
+          "data portability request",
+          "portable data export",
+          "export data in machine-readable format",
+          "export user data JSON",
+          "export user data CSV",
+          "user data transfer package",
+          "generate transferable data bundle",
+          "build data portability endpoint",
+          "portability API endpoint",
+          "create user data transfer file",
+          "export interoperable data",
+          "download machine-readable user data",
+          "download structured user data",
+          "export user data schema",
+          "generate portable profile export",
+          "package data for transfer to another service",
+          "data transfer workflow",
+          "user-initiated data transfer",
+          "standardized data export format",
+          "produce user data archive",
+          "produce JSON-LD export",
+          "create user export ZIP file",
+          "portability-compliant export",
+          "data portability pipeline",
+          "data extraction for portability",
+          "gather all transferable user records",
+          "assemble exportable data fields",
+          "normalize user data for export",
+          "serialize user data for portability",
+          "output structured PII bundle",
+          "add export-my-data feature",
+          "machine-readable export implementation",
+          "data portability automation",
+          "implement GDPR portability flow",
+          "handle portability ticket",
+          "process portability request",
+          "export user-linked events",
+          "port-friendly data formatting"
+        ]
+      }
+    },
+    {
+      "id": "right-to-erasure",
+      "label": "right to erasure",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-erasure.csv",
+        "terms": [
+          "allow deletion",
+          "allow delete",
+          "allow to delete",
+          "Right to Delete",
+          "Right to Erasure",
+          "Right to Deletion",
+          "Right of Deletion",
+          "Right of Erasure",
+          "Right to Request Deletion",
+          "Right to be Forgotten",
+          "Erase Information",
+          "Request erasure",
+          "Erase the Personal data",
+          "Erase your Personal data",
+          "Erase their Personal data",
+          "Erase his Personal data",
+          "Erase user Personal data",
+          "Erase users Personal data",
+          "Erase her Personal data",
+          "Erase Your Data",
+          "Erase their Data",
+          "Erase his Data",
+          "erase her data",
+          "erase user data",
+          "erase users data",
+          "Erase any personal data",
+          "Erase personal data",
+          "Erase Information",
+          "Erase user Information",
+          "Erase users Information",
+          "Erase their Information",
+          "Erase her Information",
+          "Erase his Information",
+          "Erase data",
+          "right to erase",
+          "delete data",
+          "user delete",
+          "users delete",
+          "deletion",
+          "right to be forgotten",
+          "right-to-be-forgotten",
+          "data deletion",
+          "data delete",
+          "delete right",
+          "deletion right",
+          "deleting right",
+          "delete flow",
+          "delete request",
+          "forget visitor data",
+          "forget data",
+          "request to erase",
+          "Erase their Information",
+          "Erase his Information",
+          "Erase her Information",
+          "remove personal data",
+          "remove my data",
+          "request data removal",
+          "data removal request",
+          "request to remove information",
+          "have data removed",
+          "eliminate personal data",
+          "remove user data",
+          "get my data deleted",
+          "request to delete information",
+          "deletion of personal data"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-erasure-GPT-revised.csv",
+        "terms": [
+          "user data deletion",
+          "delete user account data",
+          "erase personal data",
+          "remove stored user data",
+          "purge user records",
+          "data erasure request",
+          "account data wipe",
+          "delete-my-data feature",
+          "data deletion endpoint",
+          "implement erasure API",
+          "process deletion request",
+          "handle CCPA deletion request",
+          "support GDPR erasure workflow",
+          "pseudonymize user data on deletion",
+          "soft-delete user profile",
+          "hard-delete user profile",
+          "delete PII fields",
+          "remove user-linked records",
+          "delete all rows tied to user ID",
+          "cascade delete user data",
+          "data purge job",
+          "scheduled data purge",
+          "remove logs associated with user",
+          "redact user identifiers",
+          "delete analytics telemetry for user",
+          "cleanup tracking identifiers",
+          "invalidate user identifiers",
+          "delete backups containing user data",
+          "data wipe confirmation flow",
+          "automated deletion pipeline",
+          "user data cleanup script",
+          "GDPR-compliant deletion flow",
+          "erase legacy user data",
+          "remove cached user data",
+          "clear user data from storage buckets",
+          "seek erasure",
+          "file deletion request",
+          "opt to delete data",
+          "permanently delete personal information",
+          "remove stored data",
+          "delete account data",
+          "clean personal data",
+          "data cleansing request"
+        ]
+      }
+    },
+    {
+      "id": "right-to-information",
+      "label": "right to information",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-information.csv",
+        "terms": [
+          "Right to Information",
+          "Right to Know",
+          "right to be informed",
+          "right to be notified",
+          "right of being informed",
+          "information right",
+          "Right to notice",
+          "learn what information is collected",
+          "see what data is stored",
+          "explain information we collect",
+          "provide data collection details",
+          "what we collect about user"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-information-GPT-revised.csv",
+        "terms": [
+          "data collection disclosure",
+          "processing disclosure",
+          "data use disclosure",
+          "data inventory exposure",
+          "expose stored fields to user",
+          "collected fields enumeration",
+          "add privacy notice",
+          "update privacy notice",
+          "generate privacy notice text",
+          "auto-populate privacy page",
+          "implement right to know endpoint",
+          "implement data disclosure API",
+          "API for listing collected fields",
+          "add info banner about tracking",
+          "implement collection-notification logic",
+          "log what we collect (for disclosure)",
+          "update disclosure content"
+        ]
+      }
+    },
+    {
+      "id": "right-to-limit-use-of-sensitive",
+      "label": "right to limit use of sensitive",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-limit-use-of-sensitive.csv",
+        "terms": [
+          "right to limit sensitive data use",
+          "limit use of sensitive personal information",
+          "right to restrict sensitive data",
+          "restrict use of sensitive information",
+          "limit sharing of sensitive data",
+          "restrict sensitive information processing",
+          "request restriction on sensitive data",
+          "limit disclosure of sensitive personal data",
+          "sensitive data limitation right"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-limit-use-of-sensitive-GPT-revised.csv",
+        "terms": [
+          "limit sensitive data use",
+          "limit use of sensitive personal information",
+          "restrict processing of sensitive data",
+          "sensitive data restriction request",
+          "limit SPI use",
+          "sensitive info processing limit",
+          "disable sensitive-data processing",
+          "disable sensitive-data sharing",
+          "block sensitive data from third parties",
+          "apply sensitive_data_limited flag",
+          "sensitive data limitation status",
+          "respect sensitive-data-limit flag",
+          "sensitive data handling override",
+          "add sensitive data limitation API",
+          "handle CPRA limit-sensitive-data request",
+          "support CPRA-sensitive-data workflow",
+          "disable profiling using sensitive data",
+          "restrict CRM access to sensitive fields",
+          "limit storage duration of sensitive data",
+          "limit surface area of sensitive attributes",
+          "sensitive data permission checks",
+          "audit SPI limitation compliance",
+          "track SPI limitation status",
+          "propagate sensitive-data-limit flag across services",
+          "ensure sensitive fields are not shared"
+        ]
+      }
+    },
+    {
+      "id": "right-to-non-discrimination",
+      "label": "right to non discrimination",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-non-discrimination.csv",
+        "terms": [
+          "Right to Non-Discrimination",
+          "Right to Non Discrimination",
+          "Right to No Discrimination",
+          "right to not  be discriminated",
+          "right of not  being discriminated",
+          "Non Discrimination",
+          "Non-Discrimination"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-non-discrimination-GPT-revised.csv",
+        "terms": [
+          "non-discrimination compliance",
+          "prevent discriminatory treatment",
+          "avoid discriminatory practices",
+          "ensure equal service levels",
+          "no discriminatory user experience",
+          "non-discrimination enforcement logic",
+          "check for discriminatory effects",
+          "ensure non-discriminatory workflows",
+          "review UX for discrimination risks",
+          "non-discrimination rule engine",
+          "implement non-discrimination safeguards",
+          "add nondiscrimination check to processing",
+          "monitor for discriminatory patterns",
+          "protect against algorithmic discrimination",
+          "discrimination testing workflow",
+          "validate equal treatment logic",
+          "non-discrimination policy enforcement",
+          "update service rules to avoid discrimination",
+          "review code paths for discriminatory logic",
+          "non-discrimination automation",
+          "flag discriminatory conditions in code",
+          "unit tests for non-discrimination guarantees",
+          "add non-discrimination API checks",
+          "handle non-discrimination complaints",
+          "process non-discrimination ticket",
+          "propagate non-discrimination policy across services",
+          "non-discriminatory defaults enforcement"
+        ]
+      }
+    },
+    {
+      "id": "right-to-object",
+      "label": "right to object",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-object.csv",
+        "terms": [
+          "Right to Object",
+          "Processing Objection",
+          "Object to processing",
+          "object right",
+          "objection right",
+          "oppose processing",
+          "object to data processing",
+          "objection to personal data processing",
+          "refuse processing",
+          "oppose processing of personal data",
+          "request to stop processing",
+          "right to block processing",
+          "file an objection",
+          "raise an objection",
+          "object to data use"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-object-GPT-revised.csv",
+        "terms": [
+          "user objection request",
+          "object to processing",
+          "processing objection flag",
+          "object to profiling",
+          "object to marketing",
+          "implement objection endpoint",
+          "add right-to-object API",
+          "update processing status to \"objected\"",
+          "apply objection flag in user record",
+          "respect user objection flag",
+          "bypass processing for objecting users",
+          "object-to-processing ticket",
+          "handle right-to-object request",
+          "support GDPR objection handling",
+          "limit processing based on objection",
+          "propagate objection flag across services",
+          "sync objection status to vendors",
+          "audit log of objection status changes",
+          "ensure downstream systems honor objection"
+        ]
+      }
+    },
+    {
+      "id": "right-to-opt-out",
+      "label": "right to opt out",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-opt-out.csv",
+        "terms": [
+          "Opt-Out",
+          "opt out",
+          "Do Not Sell my Personal Information",
+          "Do Not Sell user's Personal Information",
+          "Do Not Sell users Personal Information",
+          "Do Not Sell user Personal Information",
+          "Do Not Sell their Personal Information",
+          "Do Not Sell his Personal Information",
+          "Do Not Sell her Personal Information",
+          "Withdraw consent",
+          "remove consent",
+          "take back consent",
+          "drop consent"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-opt-out-GPT-revised.csv",
+        "terms": [
+          "opt-out request",
+          "user opt-out flag",
+          "opt-out of data processing",
+          "opt-out of tracking",
+          "opt-out of analytics",
+          "opt-out of profiling",
+          "opt-out of targeted advertising",
+          "opt-out of personalized ads",
+          "disable personalized advertising",
+          "disable ad targeting for user",
+          "disable behavioral tracking",
+          "disable behavioral profiling",
+          "do-not-track flag",
+          "do-not-target flag",
+          "do-not-profile flag",
+          "do-not-sell request",
+          "do-not-share request",
+          "disable marketing communications",
+          "disable remarketing",
+          "remove from advertising audiences",
+          "exclude user from analytics",
+          "respect opt-out flag",
+          "processing override for opt-out",
+          "conditional processing: user opted out",
+          "opt-out workflow",
+          "opt-out handling pipeline",
+          "implement opt-out endpoint",
+          "add opt-out API",
+          "handle opt-out ticket",
+          "process CCPA/CPRA opt-out request",
+          "support right-to-opt-out flow",
+          "audit opt-out compliance",
+          "honor global privacy control (GPC)",
+          "GPC signal handling",
+          "implement GPC override logic",
+          "detect GPC headers"
+        ]
+      }
+    },
+    {
+      "id": "right-to-rectification",
+      "label": "right to rectification",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-rectification.csv",
+        "terms": [
+          "Right to Rectification",
+          "Right of Rectification",
+          "right to correct",
+          "Right to have incomplete personal data",
+          "Right to complete incomplete personal data",
+          "Right to Request Proper Rectification",
+          "Right to Request Rectification",
+          "Rectify Your Data",
+          "Rectify his Data",
+          "Rectify her Data",
+          "Rectify their Data",
+          "rectify data",
+          "rectification right",
+          "user rectifies",
+          "users rectify",
+          "to rectify",
+          "to correct",
+          "Right to Correct and Update",
+          "Right to Update",
+          "Update or Correct your Information",
+          "Update or Correct their Information",
+          "Update or Correct his Information",
+          "Update or Correct her Information",
+          "Update your Information",
+          "Update their Information",
+          "Update his Information",
+          "Update her Information",
+          "Update user Information",
+          "Update users Information",
+          "Update Information",
+          "Correct your Information",
+          "Correct their Information",
+          "Correct his Information",
+          "Correct her Information",
+          "Correct user Information",
+          "Correct users Information",
+          "Correct Information",
+          "Right to request the correction",
+          "Right to request correction",
+          "Right to request update",
+          "Right to Correction",
+          "Right of Correction",
+          "Rectify",
+          "Rectify Data",
+          "Update or Correct Information",
+          "Correct Information",
+          "correcting data",
+          "correction requested",
+          "correction of stored records",
+          "user-requested update",
+          "data rectified",
+          "request a revision"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-rectification-GPT-revised.csv",
+        "terms": [
+          "user data correction",
+          "correct user data fields",
+          "update personal data",
+          "edit user profile data",
+          "fix inaccurate user information",
+          "modify stored user attributes",
+          "rectify incorrect data",
+          "data correction request",
+          "implement data correction flow",
+          "build user data update endpoint",
+          "enable user profile edits",
+          "editable user data fields",
+          "update PII fields",
+          "apply user data fix",
+          "correct stored attributes",
+          "correct database values for user",
+          "fix inconsistent user data",
+          "sync corrected data across services",
+          "propagate user data corrections",
+          "resolve user-data mismatch",
+          "handle rectification ticket",
+          "process rectification request",
+          "support rectification workflow",
+          "validate updated user info",
+          "user-requested data update",
+          "implement edit-my-data feature",
+          "add personal info update UI",
+          "data integrity correction",
+          "overwrite outdated user data",
+          "ensure cross-system data consistency"
+        ]
+      }
+    },
+    {
+      "id": "right-to-restriction-of-processing",
+      "label": "right to restriction of processing",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-restriction-of-processing.csv",
+        "terms": [
+          "Right to Restriction of Processing",
+          "right to restrict processing",
+          "right to limit",
+          "Restriction of Processing",
+          "Restrict Your data",
+          "Restrict their data",
+          "Restrict his data",
+          "Restrict her data",
+          "restrict user data",
+          "Right to Restrict",
+          "Right to demand processing restrictions",
+          "Request the Restriction of Use",
+          "Request the Restriction of Data Use",
+          "Request the Restriction of Personal Data Use",
+          "Right to be informed about the restriction",
+          "Right of data subjects to be informed about the restriction",
+          "Right to propose other restriction",
+          "Restrict data",
+          "restriction right",
+          "restrict right",
+          "data restrict",
+          "restrict process"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-restriction-of-processing-GPT-revised.csv",
+        "terms": [
+          "restrict data processing",
+          "pause data processing for user",
+          "suspend processing of user data",
+          "limit processing activities",
+          "processing restriction request",
+          "freeze user data processing",
+          "flag user as restricted",
+          "restriction flag in user profile",
+          "apply processing hold",
+          "processing pause state",
+          "stop tracking for specific user",
+          "stop enrichment for user",
+          "processing-restriction workflow",
+          "respect processing_restricted flag",
+          "check restriction flag before processing",
+          "bypass processing for restricted users",
+          "skip pipelines for restricted accounts",
+          "disable profiling for restricted users",
+          "apply temporary processing block"
+        ]
+      }
+    },
+    {
+      "id": "storage-limitation",
+      "label": "storage limitation",
+      "original": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-storage-limitation.csv",
+        "terms": [
+          "storage limitation",
+          "limitation in storage",
+          "stored limited time",
+          "stored for limited time"
+        ]
+      },
+      "revised": {
+        "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-storage-limitation-GPT-revised.csv",
+        "terms": [
+          "storage limitation compliance",
+          "limit data retention",
+          "retention policy enforcement",
+          "data retention rules",
+          "retention period expiration",
+          "delete data after retention deadline",
+          "retention window check",
+          "retention period validation",
+          "enforce minimal retention period",
+          "restrict long-term storage",
+          "retention-aware storage policy",
+          "storage minimization by retention",
+          "remove PII after purpose fulfilled",
+          "purpose-linked retention logic",
+          "detect retention violations",
+          "flag data older than retention window"
+        ]
+      }
+    }
+  ]
+}

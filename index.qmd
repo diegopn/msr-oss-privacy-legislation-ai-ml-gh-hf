@@ -1,0 +1,174 @@
+---
+title: "Discussões sobre privacidade em OSS de IA/ML"
+subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
+---
+
+<div class="hero-note"><p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions de modelos e datasets do Hugging Face.</p></div>
+
+## Estado do projeto {#visao-geral}
+
+<p id="collection-status" role="status">Coleta científica ainda não executada.</p>
+
+<div class="metric-grid">
+<div class="metric-card"><h3>—</h3><p data-i18n="catalogued">Projetos catalogados</p></div>
+<div class="metric-card"><h3>—</h3><p data-i18n="eligible">Projetos elegíveis</p></div>
+<div class="metric-card"><h3>—</h3><p data-i18n="discussions">Discussões únicas com evidência legal</p></div>
+</div>
+
+<p data-i18n="pending">Um traço indica resultado pendente. Pilotos e testes simulados não compõem os resultados científicos.</p>
+
+## Método {#metodologia}
+
+<p data-i18n="method">A descoberta precede a seleção dos projetos. A confirmação registra ocorrências textuais e sua procedência; as categorias de privacidade são atribuídas pelos avaliadores.</p>
+
+| Questão | Objeto |
+|---|---|
+| RQ1 | Direitos dos titulares e princípios mencionados; título/texto inicial separados do contexto dos comentários |
+| RQ2 | Preocupações discutidas e cobertura pela taxonomia original de 24 categorias |
+| RQ3 | Etapas do desenvolvimento de IA/ML/LLM às quais as preocupações se referem |
+
+<p data-i18n="rq_scope">GitHub × Hugging Face integra as três RQs. A comparação com OSS em geral integra RQ1 e RQ2. Não há RQ4 nem comparação antes/depois da GDPR. Comentários automatizados em discussões humanas são preservados como contexto.</p>
+
+| Lei | Termos literais | Início da janela |
+|---|---|---|
+| GDPR | GDPR; General Data Protection Regulation | 14/04/2016 |
+| CCPA | CCPA; California Consumer Privacy Act | 28/06/2018 |
+| CPRA | CPRA; California Privacy Rights Act | 03/11/2020 |
+| Data Protection Act | Data Protection Act | 23/05/2018 |
+
+<p data-i18n="cutoff">Corte inclusivo: 22/09/2026, em UTC. Datas ausentes ou inválidas não comprovam elegibilidade. Conteúdos editados depois do corte podem estar presentes nos textos atuais.</p>
+
+<p data-i18n="github">GitHub: busca global de termos legais em issues públicas e fechadas; exclui pull requests e autores de issues identificados como bots. O repositório precisa de um sinal de descoberta de IA/ML e evidência técnica. A coleta lê manifestos na raiz e README quando necessário; não percorre código-fonte ou subdiretórios.</p>
+
+<p data-i18n="hf">Hugging Face: descoberta de modelos e datasets por cada licença OSI; exclui Spaces, projetos privados e acesso gated. Uma tarefa, pipeline ou biblioteca reconhecida em metadados estruturados confirma IA/ML. Apenas Discussions fechadas são aceitas; autores identificados como bots são excluídos.</p>
+
+<p data-i18n="licenses">Ambas as plataformas: licença SPDX reconhecida pela lista OSI local e criação até o corte. Todos os identificadores em expressões de licença precisam ser aprovados. Forks e projetos arquivados são aceitos; não há limiares de popularidade.</p>
+
+<p data-i18n="concepts">20 conceitos: listas originais e revisadas do pacote científico, com limites de palavra e procedência separada. 24 categorias: codebook humano, sem classificação automática por palavras-chave.</p>
+
+## Amostra e avaliação {#dados}
+
+<p data-i18n="sampling">Estratos: plataforma × tipo de repositório × lei. Cochran com correção para população finita: confiança de 99%, margem de 5%, proporção de 50%; tamanho arredondado para cima e limitado à população. Sorteio sem reposição, semente 20260920 acrescida do índice do estrato.</p>
+
+<p data-i18n="coding">Cada discussão aparece uma vez por avaliador na planilha CSV, mesmo quando participa de várias leis. Dois avaliadores por padrão. Relevância: 0, 1 ou vazio. Categorias: IDs do codebook separados por ponto e vírgula, sem repetição. Kappa usa apenas pares preenchidos; casos sem pares ou com concordância esperada igual a 1 permanecem indefinidos.</p>
+
+<p data-i18n="exports">Os CSV de população, amostra, estratos, codificação e codebook, além do manifesto com hashes, ficam em inputs/final/collection para as análises posteriores. Os dados brutos e tokens não são copiados para o site.</p>
+
+## Etapas do desenvolvimento — RQ3 {#rq3}
+
+<p id="rq3-status" role="status">RQ3 pendente: ainda não há anotações reais de etapas e consenso importados.</p>
+
+<p data-i18n="rq3_instrument">Instrumento ml-stages-1.0.0: requisitos do modelo, coleta de dados, limpeza, rotulagem, engenharia de características, treinamento, avaliação, implantação e monitoramento. Eixo separado das 24 categorias, inspirado em Amershi et al. (2019). As definições operacionais e adaptações para LLM são desta pesquisa; etapas não são inferidas pelo hub.</p>
+
+<p data-i18n="rq3_review">Dois avaliadores cobrem toda a amostra independentemente; o consenso é preservado em outra planilha. Cada etapa identificada exige trecho e artefato de origem. Pendência difere de etapa indeterminada após avaliação. A concordância por etapa é calculada antes do consenso; pares indeterminados ou não relevantes não são tratados como ausência da etapa.</p>
+
+As etapas não são atribuídas automaticamente. Não há resultados humanos para apresentar.
+
+<p data-i18n="rq3_denominator">Descrições da amostra manual, sem extrapolação para a população: N é o número de discussões relevantes com anotação de etapa concluída, incluindo indeterminadas. Pendências ficam separadas. Uma discussão pode ter várias etapas e as proporções podem somar mais de 100%. Denominador zero produz proporção indefinida; zero discussões relevantes no HF é um resultado válido.</p>
+
+<p data-i18n="rq3_inference">Para cada uma das nove etapas: H0, a proporção em discussões relevantes é igual entre os hubs; H1, difere. Contrastes exigem projetos comparáveis, tratamento do agrupamento por projeto e vínculos entre hubs, efeitos, intervalos e ajuste de Holm. Enquanto faltarem esses requisitos, são registrados como não testáveis. Diferenças não demonstram conformidade nem maior preocupação jurídica de um hub.</p>
+
+## Execução local {#reproducao}
+
+```bash
+Rscript main.R --check
+Rscript main.R --test
+Rscript main.R --pilot
+Rscript main.R --github
+Rscript main.R --huggingface
+Rscript main.R --analyze
+```
+
+<p data-i18n="full">A opção --run faz as duas coletas e a análise usando banco temporário. O banco oficial só é substituído após sucesso, com arquivamento do anterior. A análise verifica as duas últimas tentativas, os problemas pendentes, o corte, as versões e os hashes das respostas brutas.</p>
+
+```bash
+Rscript main.R --run
+quarto preview
+```
+
+<p data-i18n="publication">O site está preparado para GitHub Pages. O workflow de publicação é manual. Testar ou renderizar localmente não cria commits nem publica o projeto.</p>
+
+<p>O piloto não gera o site. As coletas GitHub e Hugging Face, a análise e a execução completa geram a página automaticamente ao concluir.</p>
+
+## Limites {#limites}
+
+<p data-i18n="limits">Menção textual não decide conformidade ou violação legal. O total de projetos GitHub corresponde aos encontrados nas buscas de discussões legais, sem estimar todos os projetos de IA/ML da plataforma. A descoberta no Hugging Face depende da indexação de licenças. O piloto demonstra funcionamento em um recorte limitado; cobertura, tempo e consumo de cota da coleta completa exigem validação.</p>
+
+<p data-i18n="unfinished">BERT, avaliação humana e todas as análises da dissertação não são executados automaticamente. A precisão da seleção de IA/ML e a cobertura das licenças ainda precisam de validação empírica.</p>
+
+## Referências {#referencias-metodologicas}
+
+Kapitsaki, G. M.; Papoutsoglou, M.; Treude, C.; Theophilou, I. (2026).
+*Analyzing developer discussions on EU and US privacy legislation compliance in GitHub repositories*.
+Information and Software Technology. [DOI: 10.1016/j.infsof.2026.108252](https://doi.org/10.1016/j.infsof.2026.108252).
+[Preprint](https://arxiv.org/abs/2512.10618).
+Fonte do procedimento de mineração de discussões, vocabulários e taxonomia.
+O [pacote de replicação](https://github.com/gkapi/github-privacy-law-issues-analysis) foi preservado
+em `inputs/reference/replication/`, no commit `eeccde00898a56d603748590fd5ce06fc05cba45`.
+As palavras-chave revisadas pelo GPT pertencem ao pacote e têm origem distinguida das originais.
+Os 20 conceitos têm listas originais; apenas 14 têm uma lista revisada no snapshot consultado.
+As 24 categorias seguem o codebook HTML. O CSV de categorias também foi preservado e contém
+rótulos de versões anteriores; ele não altera silenciosamente o codebook.
+
+Gonzalez, D.; Zimmermann, T.; Nagappan, N. (2020).
+*The State of the ML-universe: 10 Years of Artificial Intelligence & Machine Learning Software Development on GitHub*.
+MSR. [DOI: 10.1145/3379597.3387473](https://doi.org/10.1145/3379597.3387473).
+Antecedente de descoberta de projetos de IA/ML por tópicos.
+
+Openja, M. et al. (2024). *An Empirical Study of Testing Machine Learning in the Wild*.
+TOSEM. [DOI: 10.1145/3680463](https://doi.org/10.1145/3680463).
+Origem bibliográfica dos primeiros 12 tópicos informados pelo usuário.
+Os 24 tópicos deste projeto foram fornecidos diretamente pelo usuário; nenhum artigo
+é apresentado como autor de toda a lista ou dos filtros deste protocolo.
+
+Cohen, J. (1960). *A Coefficient of Agreement for Nominal Scales*.
+Educational and Psychological Measurement. [DOI: 10.1177/001316446002000104](https://doi.org/10.1177/001316446002000104).
+Referência de concordância para duas codificações independentes.
+
+Cochran, W. G. (1977). *Sampling Techniques*, 3rd edition. Wiley.
+Referência da fórmula de tamanho amostral, com correção para população finita.
+Os parâmetros de 99%, 5% e 50% são decisões do protocolo informado pelo usuário.
+
+### Extensão desta pesquisa: RQ3
+
+Amershi, S.; Begel, A.; Bird, C.; DeLine, R.; Gall, H.; Kamar, E.;
+Nagappan, N.; Nushi, B.; Zimmermann, T. (2019).
+*Software Engineering for Machine Learning: A Case Study*.
+ICSE-SEIP, pp. 291–300.
+[DOI: 10.1109/ICSE-SEIP.2019.00042](https://doi.org/10.1109/ICSE-SEIP.2019.00042).
+[Fonte primária](https://www.microsoft.com/en-us/research/publication/software-engineering-for-machine-learning-a-case-study/).
+A seção II.B e a Figura 1 informam as nove etapas, com ciclos de retorno.
+Os IDs, definições operacionais de preocupações regulatórias, regras de
+evidência e adaptações para LLM em `ml-stages-1.0.0` são nossos.
+Esse instrumento não substitui as 24 categorias de Kapitsaki et al.
+O codebook e as instruções estão em `inputs/reference/rq3-codebook.md`.
+
+### Literatura externa para interpretação
+
+Conforme o pré-projeto atualizado, estes trabalhos contextualizam os
+resultados; não fornecem as 24 categorias nem validam automaticamente a RQ3:
+
+- Herwanto et al. (2024), *Toward a Holistic Privacy Requirements Engineering
+  Process: Insights From a Systematic Literature Review*.
+  [DOI: 10.1109/ACCESS.2024.3380888](https://doi.org/10.1109/ACCESS.2024.3380888).
+- Kosenkov et al. (2026), *Privacy by design: Aligning GDPR and software
+  engineering specifications with a requirements engineering approach*.
+  [DOI: 10.1016/j.infsof.2025.107946](https://doi.org/10.1016/j.infsof.2025.107946).
+- Sangaroonsilp et al. (2023), *A taxonomy for mining and classifying privacy
+  requirements in issue reports*.
+  [DOI: 10.1016/j.infsof.2023.107162](https://doi.org/10.1016/j.infsof.2023.107162).
+- Mitchell et al. (2019), *Model Cards for Model Reporting*.
+  [DOI: 10.1145/3287560.3287596](https://doi.org/10.1145/3287560.3287596).
+- Gebru et al. (2021), *Datasheets for Datasets*.
+  [DOI: 10.1145/3458723](https://doi.org/10.1145/3458723).
+- Kapitsaki (2026), *Regulatory compliance-readiness in the AI Supply Chain:
+  examining datasets in Hugging Face*.
+  [Preprint arXiv:2607.03310](https://arxiv.org/abs/2607.03310).
+  Seu objeto são cards de datasets; não equivale às Discussions nem aos
+  critérios comuns de licenciamento desta pesquisa.
+
+Documentação técnica: [GitHub Search](https://docs.github.com/en/rest/search/search),
+[Hugging Face Hub API](https://huggingface.co/docs/hub/en/api),
+[limites de comunicação do Hub](https://huggingface.co/docs/hub/en/rate-limits),
+[lista SPDX](https://github.com/spdx/license-list-data) e
+[Quarto no GitHub Pages](https://quarto.org/docs/publishing/github-pages.html).

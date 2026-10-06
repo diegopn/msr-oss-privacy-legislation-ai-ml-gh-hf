@@ -1,0 +1,68 @@
+version: ml-stages-1.0.0
+status: instrument_prepared_human_pilot_pending
+source_doi: 10.1109/ICSE-SEIP.2019.00042
+source_url: https://www.microsoft.com/en-us/research/publication/software-engineering-for-machine-learning-a-case-study/
+attribution: Nove etapas inspiradas em Amershi et al. (2019), seção II.B e Figura 1. Definições operacionais, exemplos de privacidade, IDs e adaptações para LLM são desta pesquisa.
+unit: Discussão fechada elegível, com título, texto inicial e contexto dos comentários; classificação independente das 24 categorias.
+rules:
+  - Avaliar a preocupação com legislação de privacidade e a atividade à qual ela se refere, sem deduzir etapas pelo hub ou tipo de repositório.
+  - Permitir múltiplas etapas somente com evidência textual para cada uma; o processo não é necessariamente linear.
+  - pending indica avaliação ainda incompleta; indeterminate indica avaliação concluída, relevante, mas sem etapa identificável.
+  - indeterminate não admite IDs de etapas; requer justificativa e trecho da preocupação relevante.
+  - not_applicable indica discussão avaliada como não relevante; não significa etapa indeterminada.
+  - Preservar as duas decisões independentes e calcular concordância antes de importar o consenso.
+stages:
+  - id: S01
+    label: Requisitos do modelo
+    definition: Definir objetivos, usos, restrições e decisões sobre o modelo.
+    inclusion: Preocupação regulatória ligada a uma exigência ou escolha para o sistema de IA.
+    exclusion: Política genérica sem ligação demonstrável com decisões do modelo.
+    llm_adaptation: Requisitos de retenção de prompts ou limites de uso de dados para um assistente; adaptação nossa.
+  - id: S02
+    label: Coleta de dados
+    definition: Obter, selecionar fontes e incorporar dados para o desenvolvimento.
+    inclusion: Discussão sobre obter ou reutilizar dados pessoais sob uma legislação.
+    exclusion: Receber uma entrada durante inferência, sem aquisição de dados para desenvolvimento.
+    llm_adaptation: Aquisição de corpora de pré-treinamento ou de fontes para RAG; adaptação nossa.
+  - id: S03
+    label: Limpeza de dados
+    definition: Corrigir, filtrar ou remover registros antes de utilizá-los.
+    inclusion: Preocupação regulatória vinculada à remoção ou transformação de dados no corpus.
+    exclusion: Excluir um modelo publicado sem mencionar tratamento do corpus.
+    llm_adaptation: Filtragem de informações pessoais e deduplicação de corpora; adaptação nossa.
+  - id: S04
+    label: Rotulagem de dados
+    definition: Atribuir rótulos, referências ou sinais de supervisão aos dados.
+    inclusion: Preocupação de privacidade no acesso ou tratamento dos dados durante anotação.
+    exclusion: Um rótulo de licença ou tag do hub, sem atividade de supervisão.
+    llm_adaptation: Anotação de instruções e preferências humanas para alinhamento; adaptação nossa.
+  - id: S05
+    label: Engenharia de características
+    definition: Construir, selecionar ou transformar representações para o modelo.
+    inclusion: Preocupação regulatória ligada à representação de dados identificáveis.
+    exclusion: Armazenamento genérico sem transformação ou seleção de representações.
+    llm_adaptation: Tokenização, embeddings ou índices para RAG quando a preocupação envolve essa representação; adaptação nossa.
+  - id: S06
+    label: Treinamento
+    definition: Aprender ou ajustar parâmetros do modelo com dados.
+    inclusion: Discussão regulatória sobre utilização de dados no aprendizado ou ajuste do modelo.
+    exclusion: Executar um modelo já treinado sem modificar seus parâmetros.
+    llm_adaptation: Pré-treinamento, fine-tuning, LoRA ou alinhamento com atualização de parâmetros; adaptação nossa.
+  - id: S07
+    label: Avaliação
+    definition: Verificar o modelo por métricas, testes ou avaliação humana.
+    inclusion: Preocupação regulatória examinada por testes ou critérios de avaliação.
+    exclusion: Observar incidentes em operação sem avaliar explicitamente o modelo.
+    llm_adaptation: Testes de memorização ou exposição de dados em benchmarks de LLM; adaptação nossa.
+  - id: S08
+    label: Implantação
+    definition: Disponibilizar e integrar o modelo para uso no ambiente-alvo.
+    inclusion: Preocupação de privacidade na disponibilização ou execução do sistema.
+    exclusion: Publicar um dataset sem demonstrar disponibilização do modelo ou sistema.
+    llm_adaptation: Serving, APIs de inferência e tratamento de prompts em uso; adaptação nossa.
+  - id: S09
+    label: Monitoramento
+    definition: Acompanhar o comportamento do modelo durante sua operação.
+    inclusion: Preocupação regulatória associada ao acompanhamento contínuo ou a incidentes em produção.
+    exclusion: Métrica medida apenas antes da disponibilização.
+    llm_adaptation: Auditoria de logs de prompts e respostas ou detecção de exposição em produção; adaptação nossa.

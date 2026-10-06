@@ -1,0 +1,40 @@
+project:
+  type: website
+  output-dir: _site
+  pre-render:
+    - Rscript main.R --mode prepare-site
+  render:
+    - /index.qmd
+  resources:
+    - /site/locales/*.json
+    - /site/summary.json
+    - /site/site.js
+    - /site/favicon.png
+website:
+  title: Privacidade em OSS de IA/ML
+  favicon: site/favicon.png
+  navbar:
+    title: PRIVACIDADE · IA/ML
+    left:
+      - href: index.qmd
+        text: Projeto
+      - href: index.qmd#metodologia
+        text: Método
+      - href: index.qmd#reproducao
+        text: Execução
+  page-footer:
+    left: Pesquisa em engenharia de software
+    right: Corte de coleta · 22/09/2026
+format:
+  html:
+    lang: pt-BR
+    theme: cosmo
+    css: site/styles.css
+    toc: true
+    toc-title: Nesta página
+    include-in-header: site/theme-init.html
+    include-after-body:
+      text: '<script src="site/site.js" defer></script>'
+    code-copy: true
+execute:
+  enabled: false

@@ -1,0 +1,186 @@
+{
+  "repository": "https://github.com/gkapi/github-privacy-law-issues-analysis",
+  "commit": "eeccde00898a56d603748590fd5ce06fc05cba45",
+  "files": [
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-accountability.csv",
+      "local": "inputs/reference/replication/law-keywords-accountability.csv",
+      "sha256": "ab9dffc5d7ae20e3dc355eb35344f57f1ca469e4c1d8998c8afa3efa5c0bbb9d"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-accuracy.csv",
+      "local": "inputs/reference/replication/law-keywords-accuracy.csv",
+      "sha256": "ee17160bece374186d7ab0588518a051ae1c4dd078fe39eafe1612be70985664"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-consent.csv",
+      "local": "inputs/reference/replication/law-keywords-consent.csv",
+      "sha256": "4669180342335f683f54f230554899884fa646ee24b7bca822c3c86dc3782356"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-cookies.csv",
+      "local": "inputs/reference/replication/law-keywords-cookies.csv",
+      "sha256": "cd84608bf45117a1f4ffe0b03997b966f595c524fd3e797b73f21e98bd50960e"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-data-minimization-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-data-minimization-GPT-revised.csv",
+      "sha256": "3152fca7613b9c2b9c0843e9c4ab0eabe284f3a3f37653de10abe7dc676d6700"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-data-minimization.csv",
+      "local": "inputs/reference/replication/law-keywords-data-minimization.csv",
+      "sha256": "30986f804932d049e9ab310647e9def0db1eb8801e42c299361a5f9efc4bc212"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-integrity-confidentality.csv",
+      "local": "inputs/reference/replication/law-keywords-integrity-confidentality.csv",
+      "sha256": "ee1f1fa6c63003bc1530c8d1321f24dd85ef9f88bd08549391334aedc6022469"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-lawfulness-fairness-transparency.csv",
+      "local": "inputs/reference/replication/law-keywords-lawfulness-fairness-transparency.csv",
+      "sha256": "85a64c833bc58bdd37567305bf02bd5890b559f05e615c185303b4345b1951ba"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-purpose-limitation-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-purpose-limitation-GPT-revised.csv",
+      "sha256": "c1653e358270c4c39ecd531a3c4eb35c5dd60deaea3234a4216e3048b32230b8"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-purpose-limitation.csv",
+      "local": "inputs/reference/replication/law-keywords-purpose-limitation.csv",
+      "sha256": "2d8e93612f5284279abbf74cf63d14a4a5f7ae1b680b1c9cc1421cf14bca5c33"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-access-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-access-GPT-revised.csv",
+      "sha256": "22502e23d7a1ecb2b6acd9ce675e76b7be7cd15f1f1add6921b5396e0d48248b"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-access.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-access.csv",
+      "sha256": "06b2c26b1b8c4208a36132d20375e04da02e9ebce088d6c367107e83aba26aee"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-avoid-automated-decision-making-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-avoid-automated-decision-making-GPT-revised.csv",
+      "sha256": "6460ca0bfe3034eb7d03127327e5983d0d7e1a2c1ad44d27349373664d352491"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-avoid-automated-decision-making.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-avoid-automated-decision-making.csv",
+      "sha256": "84b51846e08119daffcfa415d1cbebdba83cb1f577d4468976816c4cd379cbcc"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-data-portability-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-data-portability-GPT-revised.csv",
+      "sha256": "abf0308804ee82b57c7b36dd9eee8303b094ebc65523df66b5331589dcc6383f"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-data-portability.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-data-portability.csv",
+      "sha256": "7d507557b44640f96981ad9b0f27bc75c11152cbda29a4634f18d7a7dce41059"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-erasure-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-erasure-GPT-revised.csv",
+      "sha256": "356eb01fbef6e5ef696a62c426c84d4a0224bf2cb83d4ca64b1f27058969fb28"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-erasure.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-erasure.csv",
+      "sha256": "788c520266beb3dad82d44d4429b313bb3c40764e0e052c18359307613bc57c3"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-information-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-information-GPT-revised.csv",
+      "sha256": "7dfe3c7165c474126aa2c5e41ee37aedba2e715d4c2759d6a55efd92fc47ed7d"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-information.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-information.csv",
+      "sha256": "e3751e2803c9f3fcd4b50ab9a822c92989cf6ade74605c749f2bce937492889c"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-limit-use-of-sensitive-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-limit-use-of-sensitive-GPT-revised.csv",
+      "sha256": "3a27cb558756c48b1fe07b4f576ef7cf05de4a042c2c08926c8cb8a5b9516921"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-limit-use-of-sensitive.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-limit-use-of-sensitive.csv",
+      "sha256": "118c7b7c649143292324d1e0a79c568d600fa777126a248d2a11c526e189bf50"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-non-discrimination-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-non-discrimination-GPT-revised.csv",
+      "sha256": "b0680700d71411c113a09fa4866e96308961909cecbb653a71b7d2715db6e2e4"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-non-discrimination.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-non-discrimination.csv",
+      "sha256": "602075ebbd8ff0a792f2077e5899fe51e3f68f314811b65a6bfd9eb92fdf4cef"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-object-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-object-GPT-revised.csv",
+      "sha256": "b62a7f0edb565cd2965d9ace7467baf6d382df22a2739df0fc7656a2aaead58e"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-object.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-object.csv",
+      "sha256": "6dddbe4dc79fc1e34782aa1a0aa93ee7644fb61e8b0b2c495bd7dbfa36d9be14"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-opt-out-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-opt-out-GPT-revised.csv",
+      "sha256": "2823c238a00eb8bb521b43c49f1a856c903ec9d8505b7cc390611b5140a3feaa"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-opt-out.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-opt-out.csv",
+      "sha256": "a37b56147e1a1ec5f4725fe47dd3525bb167c85364e5f659b2cbe41de64ecc4a"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-rectification-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-rectification-GPT-revised.csv",
+      "sha256": "e0374194696b6ff56b661d525db9de408c604db5705049de20878330370321cf"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-rectification.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-rectification.csv",
+      "sha256": "dee1bc90fff49b4d049de3601f2f04e28758576fa30e2201a5f4a63fcf42156c"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-restriction-of-processing-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-restriction-of-processing-GPT-revised.csv",
+      "sha256": "d6fa1ef65739cf8c52719e68170139754f7a2f5fafd03742d18e627f3e1f2182"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-right-to-restriction-of-processing.csv",
+      "local": "inputs/reference/replication/law-keywords-right-to-restriction-of-processing.csv",
+      "sha256": "b4b49f833e27fd969f89793ba4cd0dc34dfaa0c1a33c7c7dc0b5ea57d751e92c"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-storage-limitation-GPT-revised.csv",
+      "local": "inputs/reference/replication/law-keywords-storage-limitation-GPT-revised.csv",
+      "sha256": "8017e5d44b6b1146e7632d76448de632ca279432b665e070d4ec66f1d917aab4"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/data/law-principles/law-keywords-storage-limitation.csv",
+      "local": "inputs/reference/replication/law-keywords-storage-limitation.csv",
+      "sha256": "23c245d6090a8c09590ca3beb1ba1059e37754aad5aa71d684fb7c36e02369d7"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/results/concerns-descriptions-gkapi-examples.html",
+      "local": "inputs/reference/replication/concerns-descriptions-gkapi-examples.html",
+      "sha256": "330dedfcdd658f79bc6f9679371d94242e8f2f6b2d523b5861e733f05770c14e"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/results/rq2-categories.csv",
+      "local": "inputs/reference/replication/rq2-categories.csv",
+      "sha256": "822aa889d8bc08fa707d97a2bfccfa3ad19af7ea8299db4f407d3a7b932c9941"
+    }
+  ]
+}

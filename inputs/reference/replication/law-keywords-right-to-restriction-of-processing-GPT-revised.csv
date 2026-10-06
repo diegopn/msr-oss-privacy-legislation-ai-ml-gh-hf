@@ -1,0 +1,20 @@
+allkeywords
+restrict data processing
+pause data processing for user
+suspend processing of user data
+limit processing activities
+processing restriction request
+freeze user data processing
+flag user as restricted
+restriction flag in user profile
+apply processing hold
+processing pause state
+stop tracking for specific user
+stop enrichment for user
+processing-restriction workflow
+respect processing_restricted flag
+check restriction flag before processing
+bypass processing for restricted users
+skip pipelines for restricted accounts
+disable profiling for restricted users
+apply temporary processing block

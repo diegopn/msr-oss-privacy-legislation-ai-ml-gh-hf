@@ -1,0 +1,175 @@
+{
+  "reviewed": true,
+  "source": "https://raw.githubusercontent.com/gkapi/github-privacy-law-issues-analysis/eeccde00898a56d603748590fd5ce06fc05cba45/results/concerns-descriptions-gkapi-examples.html",
+  "version": "gkapi-eeccde00898a",
+  "categories": [
+    {
+      "id": "C01",
+      "label": "User consent mechanisms",
+      "cluster": "Consent-related",
+      "description": "to allow user to provide consent for data handling or relevant preferences, or handle consent",
+      "example": "https://github.com/nextcloud/registration/issues/140"
+    },
+    {
+      "id": "C02",
+      "label": "User rights functionality",
+      "cluster": "Consent-related",
+      "description": "Functionality related with any user right from legislation",
+      "example": "https://github.com/Automattic/wp-calypso/issues/22512"
+    },
+    {
+      "id": "C03",
+      "label": "Cookie preferences and management",
+      "cluster": "Consent-related",
+      "description": "Cookie consent/preferences of users or relevant functionality",
+      "example": "https://github.com/pubpub/pubpub/issues/390"
+    },
+    {
+      "id": "C04",
+      "label": "Bug related with law functionality",
+      "cluster": "Compliance implementation",
+      "description": "Bugs encountered concerning law compliance relevant functionality",
+      "example": "https://github.com/Kunena/Kunena-Forum/issues/6032"
+    },
+    {
+      "id": "C05",
+      "label": "Typo/UI change",
+      "cluster": "Compliance implementation",
+      "description": "Changes in UI, including fixes in wording and typos",
+      "example": "https://github.com/dhowe/spectre/issues/402"
+    },
+    {
+      "id": "C06",
+      "label": "Library update",
+      "cluster": "Compliance implementation",
+      "description": "Update to a new library version or library change",
+      "example": "https://github.com/newrelic/opensource-website/issues/734"
+    },
+    {
+      "id": "C07",
+      "label": "Law compliance testing",
+      "cluster": "Compliance implementation",
+      "description": "Testing relevant to law compliance features",
+      "example": "https://github.com/uradotdesign/works/issues/24"
+    },
+    {
+      "id": "C08",
+      "label": "Other law-relevant feature",
+      "cluster": "Compliance implementation",
+      "description": "Adding new functionality for law compliance not covered in other categories",
+      "example": "https://github.com/gebruederheitz/consent-tools/issues/8"
+    },
+    {
+      "id": "C09",
+      "label": "Law information page/policy",
+      "cluster": "Documentation",
+      "description": "Privacy policy or law information page creation/update",
+      "example": "https://github.com/schibsted/account-sdk-android/issues/153"
+    },
+    {
+      "id": "C10",
+      "label": "Create/update links to law information",
+      "cluster": "Documentation",
+      "description": "Adding or correcting links to law pages, e.g., to privacy policy, to GDPR",
+      "example": "https://github.com/Couchers-org/couchers/issues/2399"
+    },
+    {
+      "id": "C11",
+      "label": "Update software documentation",
+      "cluster": "Documentation",
+      "description": "Updating system documentation to reflect law compliance",
+      "example": "https://github.com/kshtgarg21/sdk-sample-code-ios/pull/2"
+    },
+    {
+      "id": "C12",
+      "label": "Data storage and access control",
+      "cluster": "Data storing/sharing",
+      "description": "Storage of data, including storage duration",
+      "example": "https://github.com/cedadev/ceda-services-portal/issues/2"
+    },
+    {
+      "id": "C13",
+      "label": "Perform data visibility/anonymization",
+      "cluster": "Data storing/sharing",
+      "description": "Defining which data are visible and which are/become anonymized",
+      "example": "https://github.com/Open-Web-Analytics/Open-Web-Analytics/issues/683"
+    },
+    {
+      "id": "C14",
+      "label": "Other security (encryption, etc.)",
+      "cluster": "Data storing/sharing",
+      "description": "Application of any security mechanism",
+      "example": "https://github.com/saadmk11/django-newsfeed/issues/8"
+    },
+    {
+      "id": "C15",
+      "label": "Logging functionality",
+      "cluster": "Data storing/sharing",
+      "description": "Logging mechanisms in the system including for auditing purposes",
+      "example": "https://github.com/MultiChat/Development/issues/70"
+    },
+    {
+      "id": "C16",
+      "label": "Third-party relation",
+      "cluster": "Data storing/sharing",
+      "description": "Relation with third party providers or software",
+      "example": "https://github.com/MargaretKrutikova/re-cite/issues/35"
+    },
+    {
+      "id": "C17",
+      "label": "Applying data minimization",
+      "cluster": "Data storing/sharing",
+      "description": "Ensuring that only required data are collected",
+      "example": "https://github.com/openactive/open-booking-api/issues/99"
+    },
+    {
+      "id": "C18",
+      "label": "Appropriate design for law compliance",
+      "cluster": "General compliance",
+      "description": "Considering law compliance when discussing system design/update",
+      "example": "https://github.com/dokuwiki/dokuwiki/issues/2321"
+    },
+    {
+      "id": "C19",
+      "label": "General law compliance",
+      "cluster": "General compliance",
+      "description": "General concerns for law compliance",
+      "example": "https://github.com/arx-deidentifier/arx/issues/126"
+    },
+    {
+      "id": "C20",
+      "label": "Express/manage law violation concern",
+      "cluster": "General compliance",
+      "description": "Raising concerns for law violations",
+      "example": "https://github.com/Adyen/adyen-web/issues/2403"
+    },
+    {
+      "id": "C21",
+      "label": "Non-technical issue",
+      "cluster": "General compliance",
+      "description": "Any non-technical issue",
+      "example": "https://github.com/DMPbelgium/DMPonline_v4/issues/27"
+    },
+    {
+      "id": "C22",
+      "label": "Handle law functionality per region",
+      "cluster": "Contextual adaptation",
+      "description": "Differentiations in code relevant to law applicability regions, e.g., EU, US",
+      "example": "https://github.com/poingstudios/godot-admob-plugin/issues/81"
+    },
+    {
+      "id": "C23",
+      "label": "Handle user analytics",
+      "cluster": "Contextual adaptation",
+      "description": "Integration and issues with analytics (e.g., Google Analytics, ads)",
+      "example": "https://github.com/MFlisar/GDPRDialog/issues/49"
+    },
+    {
+      "id": "C24",
+      "label": "Add/update indication of law compliance",
+      "cluster": "Contextual adaptation",
+      "description": "Law compliance indication additions/updates in source code",
+      "example": "https://github.com/wp-sms/wp-sms/issues/38"
+    }
+  ]
+}
