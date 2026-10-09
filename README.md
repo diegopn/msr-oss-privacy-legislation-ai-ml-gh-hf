@@ -27,7 +27,8 @@ geral integra RQ1 e RQ2. Não há RQ4 ou experimento antes/depois da GDPR.
 
 ## Requisitos e instalação
 
-R ≥ 4.6.0 e Quarto no PATH. Não é necessário usar RStudio ou um arquivo `.Rproj`.
+R ≥ 4.6.0 e Quarto no PATH. O lockfile foi gerado com R 4.6.1, versão usada na
+CI. Não é necessário usar RStudio ou um arquivo `.Rproj`.
 Pacotes de produção: `R6`, `yaml`, `jsonlite`, `httr2`, `DBI`, `RSQLite`, `digest`.
 Os testes usam `testthat` e `cyclocomp`.
 
@@ -41,9 +42,10 @@ Rscript main.R --mode check
 Rscript main.R --mode test
 ```
 
-`--install` instala as dependências na pasta local `.Rlibrary/`, ignorada pelo
-Git. Sistemas Linux podem precisar dos pacotes de desenvolvimento de libcurl e
-OpenSSL para compilar as dependências. A instalação não inicia uma coleta.
+`--install` restaura as versões registradas em `renv.lock` para a biblioteca
+isolada do projeto. A primeira restauração requer acesso ao CRAN. Sistemas Linux
+podem precisar dos pacotes de desenvolvimento de libcurl e OpenSSL para compilar
+dependências. A instalação não inicia uma coleta.
 
 Configure os tokens em `.env`, a partir de `.env.example`, ou nas variáveis
 `GITHUB_TOKEN` e `HF_TOKEN`. O arquivo existente `.env` foi preservado. Tokens
@@ -412,11 +414,14 @@ do workflow, sem precisar versionar os arquivos gerados. Veja a
 [documentação do Quarto](https://quarto.org/docs/publishing/github-pages.html#ignoring-output).
 O site mantém os estilos e recursos visuais
 pré-configurados e oferece controles de tema e tradução dos textos do protocolo.
-O workflow `.github/workflows/quarto-publish.yml` executa testes e publicação
-somente por acionamento manual (`workflow_dispatch`). Quando decidir publicar,
-configure Pages para GitHub Actions e acione o workflow no repositório enviado.
-Ele publica a única página metodológica; dados científicos locais não são enviados
-automaticamente, pois bancos, respostas brutas e CSV preparados são ignorados pelo Git.
+O workflow `.github/workflows/check.yml` executa os testes em pull requests e
+em cada push para `main`. Quando os testes de um push em `main` passam, o
+workflow `.github/workflows/quarto-publish.yml` renderiza e publica o site em
+uma execução separada; assim, os testes não são repetidos durante a publicação.
+A publicação também pode ser acionada manualmente. Configure Pages para usar
+GitHub Actions. O workflow publica a única página metodológica; dados científicos
+locais não são enviados automaticamente, pois bancos, respostas brutas e CSV
+preparados são ignorados pelo Git.
 
 `site/` guarda o template e os recursos de origem; `_site/` é o pacote gerado
 para publicação. As regras de inclusão do Quarto estão restritas à raiz do
