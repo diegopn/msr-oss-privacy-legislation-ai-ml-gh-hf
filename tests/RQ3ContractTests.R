@@ -44,7 +44,7 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       testthat::expect_identical(vapply(private$config$stages$stages, function(x) x$id, ""), sprintf("S%02d", 1:9))
       testthat::expect_identical(private$config$stages$version, "ml-stages-1.0.0")
       testthat::expect_identical(private$config$stages$source_doi, "10.1109/ICSE-SEIP.2019.00042")
-      testthat::expect_identical(private$config$fingerprint, "effa958ff8ba5bee2072e668b8bdaedee8294ba534eb1fe01d6f3e2a4fb3c6a4")
+      testthat::expect_identical(private$config$fingerprint, "7ecf0e4c4e3d187a98fe8907b09de33e41639a08e206812b9293c687188eeab1")
       testthat::expect_length(private$config$taxonomy$categories, 24L)
       testthat::expect_identical(private$config$settings$protocol$version, "1.3.0")
       codebook <- paste(readLines(private$config$path("inputs/reference/rq3-codebook.md"), warn = FALSE),

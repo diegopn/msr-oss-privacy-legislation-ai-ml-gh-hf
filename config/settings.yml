@@ -77,8 +77,8 @@ pilot:
   github_results_per_term: 1000
   github_issues: 100
   github_comments: 20
-  hf_discovered_per_type: 150
-  hf_eligible_per_type: 150
+  hf_discovered_per_type: 1000
+  hf_eligible_per_type: 1000
   hf_discussions_per_repo: 20
 paths:
   database: inputs/data/research.sqlite

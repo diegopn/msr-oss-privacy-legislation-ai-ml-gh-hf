@@ -188,10 +188,14 @@ tópicos foram mantidos exatamente como enviados pelo usuário. Os vocabulários
 complementares estão explicitados na configuração e precisam de validação no
 contexto da pesquisa.
 
-No Hugging Face, a descoberta percorre cada licença OSI em modelos, datasets,
-Spaces e Kernels, com paginação processada por callbacks e deduplicação por
-tipo e identificador. Buckets ficam fora da coleta porque não são unidades com
-Discussions. Os campos variam por tipo: Spaces não expõem `gated`; Kernels
+No Hugging Face, modelos, datasets e Kernels são descobertos por licença OSI,
+com paginação processada por callbacks e deduplicação por tipo e identificador.
+Spaces usam a listagem geral paginada: a API documenta `filter` como filtro por
+tags e não oferece filtro por licença nesse endpoint. A licença de cada Space
+é validada localmente pelos metadados, tags e README; por isso, o limite de
+1.000 Spaces descobertos pode resultar em menos de 1.000 elegíveis. Buckets
+ficam fora da coleta porque não são unidades com Discussions. Os campos variam
+por tipo: Spaces não expõem `gated`; Kernels
 usam metadados próprios e `KernelInfo` não documenta campos como `createdAt`
 ou `disabled`. A documentação oficial sobre [repositórios Kernel](https://huggingface.co/docs/huggingface_hub/en/guides/repository)
 lista métodos de consulta de um Kernel, arquivos e referências, mas não documenta uma listagem geral de Kernels. A
@@ -209,8 +213,10 @@ discussões elegíveis são preservados. A identificação
 de bots usa o tipo da conta, padrões de nome e `eligibility.hf_bot_accounts`,
 que inclui `parquet-converter`. Eventos textuais são tratados individualmente;
 pull requests e commits ficam fora. A indexação de licenças do serviço limita
-a descoberta. Consulte a [API oficial do Hugging Face](https://huggingface.co/docs/huggingface_hub/en/package_reference/hf_api)
-e o [guia oficial de Discussions](https://huggingface.co/docs/huggingface_hub/en/guides/community).
+a descoberta de modelos, datasets e Kernels. Consulte a documentação oficial de
+[HfApi](https://huggingface.co/docs/huggingface_hub/en/package_reference/hf_api),
+[cartões de Spaces](https://huggingface.co/docs/huggingface_hub/main/en/package_reference/cards)
+e [Discussions](https://huggingface.co/docs/huggingface_hub/en/guides/community).
 
 O protocolo é `1.3.0`, registrando a inclusão de Kernels, a decisão automática
 sem fila de revisão de repositórios e distinguindo estas
@@ -414,13 +420,14 @@ de renovação são respeitados; fallback cresce de 30 a 300 segundos.
 | Repositórios GitHub validados | 600 |
 | Issues de projetos GitHub aceitos processadas | 100 |
 | Comentários por issue | 20 |
-| Repositórios HF descobertos por tipo | 150 |
-| Repositórios HF elegíveis processados por tipo | 150 |
+| Repositórios HF descobertos por tipo | 1000 |
+| Repositórios HF elegíveis processados por tipo | 1000 |
 | Entradas de discussão examinadas por repositório HF | 20 |
 
-O limite do piloto do Hugging Face é de até 600 repositórios no total: 150 por
-tipo entre modelos, datasets, Spaces e Kernels. Filtros podem reduzir as quantidades elegíveis. O piloto não estima
-cobertura, tempo ou consumo de cota da coleta completa.
+O limite do piloto do Hugging Face é de até 4.000 repositórios catalogados:
+1.000 por tipo entre modelos, datasets, Spaces e Kernels. Filtros podem reduzir
+as quantidades elegíveis. O piloto não estima cobertura, tempo ou consumo de
+cota da coleta completa.
 
 ## Referências
 

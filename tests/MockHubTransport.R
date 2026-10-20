@@ -45,9 +45,11 @@ MockHubTransport <- R6::R6Class("MockHubTransport",
         pull_request = if (index == 3L) list(url = "pr") else NULL)
     },
     hf = function(url) {
+      if (grepl("/api/spaces?", url, fixed = TRUE)) {
+        return(private$factory$response(list(list(id = "org/space-demo"))))
+      }
       if (grepl("?filter=", url, fixed = TRUE)) {
-        id <- if (grepl("/api/spaces?", url, fixed = TRUE)) "org/space-demo" else if (
-          grepl("/api/kernels?", url, fixed = TRUE)) "org/kernel-demo" else "org/demo"
+        id <- if (grepl("/api/kernels?", url, fixed = TRUE)) "org/kernel-demo" else "org/demo"
         return(private$factory$response(list(list(id = id))))
       }
       if (grepl("/spaces/org/space-demo/resolve/main/README.md", url, fixed = TRUE)) return(private$factory$response(text =

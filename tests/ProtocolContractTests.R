@@ -759,9 +759,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
           return(private$factory$response(list()))
         }
         if (grepl("/api/spaces?", url, fixed = TRUE)) {
-          if (grepl("page=2", url, fixed = TRUE)) return(private$factory$response(list(list(id = "org/space-two"))))
+          if (grepl("page=2", url, fixed = TRUE)) return(private$factory$response(list(
+            list(id = "org/space-two"), list(id = "org/space-unlicensed"))))
           return(private$factory$response(list(list(id = "org/space-one")), headers = list(link =
-            '<https://huggingface.co/api/spaces?filter=license%3Amit&page=2&expand=createdAt&expand=private&expand=disabled&expand=cardData&expand=tags&expand=sdk>; rel="next"')))
+            '<https://huggingface.co/api/spaces?limit=100&page=2&expand=createdAt&expand=private&expand=disabled&expand=cardData&expand=tags&expand=sdk>; rel="next"')))
         }
         if (grepl("/api/spaces/org/", url, fixed = TRUE) && !grepl("/discussions", url, fixed = TRUE)) {
           id <- sub(".*/api/spaces/", "", url)
@@ -769,6 +770,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
             private = FALSE, disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())))
         }
         if (grepl("/spaces/org/", url, fixed = TRUE) && grepl("/resolve/main/README.md", url, fixed = TRUE)) {
+          if (grepl("space-unlicensed", url, fixed = TRUE)) return(private$factory$response(
+            text = "---\ntask_categories: [text-classification]\n---\nNo license declared"))
           return(private$factory$response(text = "---\nlicense: mit\ntask_categories: [text-classification]\n---\nSpace README"))
         }
         if (grepl("/api/spaces/org/", url, fixed = TRUE) && grepl("/discussions?p=", url, fixed = TRUE)) return(private$factory$response(list(
@@ -787,8 +790,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       http <- private$factory$http(fixture, "huggingface", transport)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, http)$run(), "completed")
       repos <- fixture$store$query("SELECT repo_type,status,payload FROM repositories ORDER BY identifier")
-      testthat::expect_identical(repos$repo_type, c("space", "space"))
-      testthat::expect_true(all(repos$status == "eligible"))
+      testthat::expect_identical(repos$repo_type, c("space", "space", "space"))
+      testthat::expect_identical(repos$status, c("eligible", "eligible", "excluded"))
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 2L)
       testthat::expect_true(all(grepl("helper-bot", fixture$store$query("SELECT payload FROM artifacts WHERE kind='event'")$payload, fixed = TRUE)))
@@ -797,6 +800,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(all(grepl("huggingface.co/spaces/org/space-", population$url, fixed = TRUE)))
       testthat::expect_equal(sum(grepl("/api/spaces?", requests, fixed = TRUE)), 2L)
       discovery <- requests[grepl("/api/spaces?", requests, fixed = TRUE)]
+      testthat::expect_false(any(grepl("filter=license", discovery, fixed = TRUE)))
       testthat::expect_true(all(grepl("expand=", discovery, fixed = TRUE)))
       testthat::expect_true(all(grepl("sdk", discovery, fixed = TRUE)))
       testthat::expect_false(any(grepl("gated|pipeline_tag|library_name", discovery)))
@@ -986,7 +990,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='comment'")$n, 1L)
       hf <- private$factory$http(fixture, "huggingface", transport)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, hf, TRUE)$run(), "completed")
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 8L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 7L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 4L)
       testthat::expect_false(any(grepl("/discussions/3", mock$requests, fixed = TRUE)))
       testthat::expect_true(all(fixture$store$query("SELECT pilot FROM runs")$pilot == 1L))

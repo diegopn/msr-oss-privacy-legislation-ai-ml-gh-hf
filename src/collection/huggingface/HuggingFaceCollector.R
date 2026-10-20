@@ -26,10 +26,12 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
       maximum <- private$config$limit("hf_discovered_per_type", private$pilot)
       label <- c(model = "modelos", dataset = "datasets", space = "Spaces", kernel = "Kernels")[[type]]
       private$progress$scope(paste("Tipo:", label), label, timer = "Tipo")
-      for (license in private$config$osi$licenses) {
+      licenses <- if (type == "space") list(NULL) else private$config$osi$licenses
+      for (license in licenses) {
         if (progress$discovered >= maximum) break
-        private$progress$activity("Descobrindo projetos", paste(label, "| licença:", license$id))
-        private$client$walk_discovery(type, license$hf_filter, function(item) {
+        scope <- if (is.null(license)) paste(label, "| listagem geral") else paste(label, "| licença:", license$id)
+        private$progress$activity("Descobrindo projetos", scope)
+        private$client$walk_discovery(type, if (is.null(license)) NULL else license$hf_filter, function(item) {
           progress <<- private$process_items(list(item), progress, type, maximum)
           progress$discovered < maximum
         })

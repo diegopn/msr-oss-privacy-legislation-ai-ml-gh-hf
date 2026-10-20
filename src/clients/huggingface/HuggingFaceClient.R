@@ -133,8 +133,10 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
         kernel = character(),
         model = c("createdAt", "private", "gated", "disabled", "cardData", "tags", "pipeline_tag", "library_name"),
         dataset = c("createdAt", "private", "gated", "disabled", "cardData", "tags"))
-      url <- paste0("https://huggingface.co/api/", type, "s?filter=license:",
-        utils::URLencode(license, reserved = TRUE), "&limit=", private$config$settings$http$page_size)
+      filter <- if (is.null(license)) "" else paste0("filter=license:",
+        utils::URLencode(license, reserved = TRUE), "&")
+      url <- paste0("https://huggingface.co/api/", type, "s?", filter,
+        "limit=", private$config$settings$http$page_size)
       if (length(properties)) url <- paste0(url, paste0("&expand=", properties, collapse = ""))
       url
     },
