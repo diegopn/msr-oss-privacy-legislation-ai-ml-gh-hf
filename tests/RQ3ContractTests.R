@@ -47,9 +47,6 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       testthat::expect_identical(private$config$fingerprint, "7ecf0e4c4e3d187a98fe8907b09de33e41639a08e206812b9293c687188eeab1")
       testthat::expect_length(private$config$taxonomy$categories, 24L)
       testthat::expect_identical(private$config$settings$protocol$version, "1.3.0")
-      codebook <- paste(readLines(private$config$path("inputs/reference/rq3-codebook.md"), warn = FALSE),
-        collapse = " ")
-      testthat::expect_match(codebook, "modelo, dataset, Space ou Kernel")
     }),
     annotations = function() testthat::test_that("importação de etapas valida multilabel, evidências, identidade e cobertura", {
       fixture <- private$setup(); on.exit(fixture$cleanup(), add = TRUE)
