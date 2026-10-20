@@ -1,11 +1,12 @@
 .env
-.codex/
 .Rlibrary/
 .Rhistory
 .RData
 .idea/
 .quarto/
 _site/
+/index.qmd
+/site/summary.json
 .run-lock/
 # Keep the input folder structure, but never version collected data.
 inputs/data/**

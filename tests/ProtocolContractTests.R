@@ -6,6 +6,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$factory <- FixtureFactory$new(config)
     },
     run = function() {
+      private$cli_help()
       private$configuration()
       private$time()
       private$license()
@@ -14,6 +15,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$http()
       private$pagination()
       private$hf_throttle()
+      private$hf_discussion_pagination()
       private$search()
       private$search_last_page()
       private$search_overlap()
@@ -46,6 +48,21 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
   ),
   private = list(
     config = NULL, environment = NULL, factory = NULL,
+    cli_help = function() testthat::test_that("ajuda pública funciona sem dependências de coleta", {
+      library <- tempfile("privacy-cli-library-"); dir.create(library)
+      on.exit(unlink(library, recursive = TRUE), add = TRUE)
+      testthat::expect_true(file.symlink(find.package("R6"), file.path(library, "R6")))
+      command <- file.path(R.home("bin"), "Rscript")
+      script <- shQuote(private$config$path("main.R"))
+      for (args in list("--help", character())) {
+        output <- system2(command, c(script, args), env = c(paste0("R_LIBS_USER=", library),
+          paste0("R_LIBS_SITE=", library)), stdout = TRUE, stderr = TRUE)
+        status <- attr(output, "status")
+        testthat::expect_equal(if (is.null(status)) 0L else status, 0L,
+          info = paste(output, collapse = "\n"))
+        testthat::expect_true(any(grepl("Modalidades:", output, fixed = TRUE)))
+      }
+    }),
     configuration = function() testthat::test_that("protocolo e fontes permanecem explícitos", {
       c <- private$config
       testthat::expect_length(c$settings$protocol$laws, 4L)
@@ -96,8 +113,17 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_identical(classifier$huggingface(list(pipeline_tag = "text-generation"))$status, "eligible")
       testthat::expect_identical(classifier$huggingface(list(), list(task_categories = list("text-classification")))$status, "eligible")
       policy <- EligibilityPolicy$new(private$config)
-      repo <- list(platform = "github", private = FALSE, available = TRUE, created = "2020-01-01", license = "MIT", fork = TRUE, archived = TRUE)
+      repo <- list(platform = "github", private = FALSE, available = TRUE, created = "2020-01-01",
+        disabled = FALSE, license = "MIT", fork = TRUE, archived = TRUE)
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
+      repo_without_disabled <- repo; repo_without_disabled$disabled <- NULL
+      testthat::expect_identical(policy$assess(repo_without_disabled, list(status = "eligible"))$reason,
+        "disabled_or_unknown")
+      kernel <- list(platform = "huggingface", type = "kernel", private = FALSE, available = TRUE,
+        gated = FALSE, license = "MIT")
+      testthat::expect_identical(policy$assess(kernel, list(status = "eligible"))$status, "eligible")
+      kernel$disabled <- TRUE
+      testthat::expect_identical(policy$assess(kernel, list(status = "eligible"))$reason, "disabled_or_unknown")
       repo_without_date <- repo; repo_without_date$created <- NULL
       testthat::expect_identical(policy$assess(repo_without_date, list(status = "eligible"))$status, "eligible")
       testthat::expect_identical(policy$assess(repo, list(status = "excluded"))$reason, "insufficient_ai")
@@ -236,6 +262,21 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       client$discussions(list(type = "model", id = "org/demo"))
       testthat::expect_equal(length(times), 4L)
       testthat::expect_true(all(diff(times) >= fixture$config$settings$http$hf_intervals$pages))
+    }),
+    hf_discussion_pagination = function() testthat::test_that("páginas de Discussions com lacunas são rejeitadas", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      fixture$store$start("huggingface")
+      transport <- function(url, headers, timeout) {
+        if (grepl("p=0", url, fixed = TRUE)) return(private$factory$response(list(
+          start = 0L, count = 3L, discussions = list(list(num = 1L)))))
+        private$factory$response(list(start = 2L, count = 3L, discussions = list(list(num = 3L))))
+      }
+      http <- private$factory$http(fixture, "huggingface", transport)
+      discussions <- HuggingFaceClient$new(http, fixture$config, fixture$store)$discussions(
+        list(type = "model", id = "org/demo"))
+      testthat::expect_length(discussions, 1L)
+      testthat::expect_true("invalid_discussion_cursor" %in%
+        fixture$store$query("SELECT code FROM problems")$code)
     }),
     search = function() testthat::test_that("intervalos saturados são subdivididos e lacunas locais não interrompem a busca", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
@@ -760,14 +801,23 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         }
         if (grepl("/api/spaces?", url, fixed = TRUE)) {
           if (grepl("page=2", url, fixed = TRUE)) return(private$factory$response(list(
-            list(id = "org/space-two"), list(id = "org/space-unlicensed"))))
-          return(private$factory$response(list(list(id = "org/space-one")), headers = list(link =
+            list(id = "org/space-two", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
+              disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()),
+            list(id = "org/space-unlicensed", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
+              disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()),
+            list(id = "org/space-gated", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
+              disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()))))
+          return(private$factory$response(list(list(id = "org/space-one", createdAt = "2021-01-01T00:00:00Z",
+            private = FALSE, disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())), headers = list(link =
             '<https://huggingface.co/api/spaces?limit=100&page=2&expand=createdAt&expand=private&expand=disabled&expand=cardData&expand=tags&expand=sdk>; rel="next"')))
         }
         if (grepl("/api/spaces/org/", url, fixed = TRUE) && !grepl("/discussions", url, fixed = TRUE)) {
           id <- sub(".*/api/spaces/", "", url)
-          return(private$factory$response(list(id = id, createdAt = "2021-01-01T00:00:00Z",
-            private = FALSE, disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())))
+          metadata <- list(id = id, createdAt = "2021-01-01T00:00:00Z", private = FALSE,
+            disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())
+          if (grepl("space-gated", id, fixed = TRUE)) metadata$gated <- "manual"
+          else if (!grepl("space-two", id, fixed = TRUE)) metadata$gated <- FALSE
+          return(private$factory$response(metadata))
         }
         if (grepl("/spaces/org/", url, fixed = TRUE) && grepl("/resolve/main/README.md", url, fixed = TRUE)) {
           if (grepl("space-unlicensed", url, fixed = TRUE)) return(private$factory$response(
@@ -789,9 +839,9 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       }
       http <- private$factory$http(fixture, "huggingface", transport)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, http)$run(), "completed")
-      repos <- fixture$store$query("SELECT repo_type,status,payload FROM repositories ORDER BY identifier")
-      testthat::expect_identical(repos$repo_type, c("space", "space", "space"))
-      testthat::expect_identical(repos$status, c("eligible", "eligible", "excluded"))
+      repos <- fixture$store$query("SELECT identifier,repo_type,status,payload FROM repositories ORDER BY identifier")
+      testthat::expect_identical(repos$repo_type, rep("space", 4L))
+      testthat::expect_identical(repos$status, c("excluded", "eligible", "eligible", "excluded"))
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 2L)
       testthat::expect_true(all(grepl("helper-bot", fixture$store$query("SELECT payload FROM artifacts WHERE kind='event'")$payload, fixed = TRUE)))
@@ -806,6 +856,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_false(any(grepl("gated|pipeline_tag|library_name", discovery)))
       testthat::expect_true(any(grepl("/spaces/org/space-one/resolve/main/README.md", requests, fixed = TRUE)))
       testthat::expect_true(any(grepl("/spaces/org/space-two/resolve/main/README.md", requests, fixed = TRUE)))
+      testthat::expect_false(any(grepl("/spaces/org/space-gated/resolve/main/README.md", requests, fixed = TRUE)))
       testthat::expect_true(any(grepl("/api/spaces/org/space-two$", requests)))
       discussion_requests <- requests[grepl("/discussions/[234]$", requests)]
       testthat::expect_length(discussion_requests, 0L)
@@ -815,6 +866,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       policy <- EligibilityPolicy$new(fixture$config)
       repo <- list(platform = "huggingface", type = "space", private = FALSE, available = TRUE,
         created = "2021-01-01T00:00:00Z", license = "MIT", disabled = FALSE)
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "excluded")
+      repo$gated <- "manual"
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "excluded")
+      repo$gated <- FALSE
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
       testthat::expect_identical(AIClassifier$new(fixture$config)$huggingface(
         list(sdk = "gradio", tags = list("gradio")))$status, "excluded")
@@ -1217,11 +1272,18 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         HttpClient$new(platform, config, store, transport, function() now, function(seconds) now <<- now + seconds)
       }
       app <- ProjectApplication$new(root, private$environment, factory)
-      testthat::expect_error(app$run(c("--mode", "github", "--mode", "huggingface")), "apenas uma")
+      options <- app$.__enclos_env__$private$options
+      testthat::expect_identical(options(character())$mode, "help")
+      testthat::expect_identical(options("--github")$mode, "github")
+      testthat::expect_identical(options("--run")$mode, "run")
+      for (option in c("--mode", "--config", "--coding", "--consensus", "--test", "--check", "--site")) {
+        testthat::expect_error(options(option), paste0("Opção inválida: ", option))
+      }
+      for (option in c("--mode", "--config", "--coding", "--consensus")) {
+        testthat::expect_error(options(c(option, "value")), paste0("Opção inválida: ", option))
+      }
       testthat::expect_error(app$run(c("--github", "--huggingface")), "apenas uma")
-      testthat::expect_error(app$run(c("--pilot", "--mode", "github")), "apenas uma")
-      testthat::expect_error(app$run(c("--mode", "unknown")), "Modalidade inválida")
-      testthat::expect_error(app$run(c("--mode", "full")), "Modalidade inválida")
+      testthat::expect_error(app$run(c("--pilot", "--github")), "apenas uma")
       testthat::expect_error(app$run("--no-site"), "Opção inválida")
       testthat::expect_error(app$run("--analyze"), "ausente")
       app$run("--huggingface")
@@ -1235,18 +1297,29 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       unlink(file.path(root, "outputs/metadata/site-failure.txt"))
       app$run("--analyze")
       testthat::expect_true(file.exists(file.path(root, "outputs/metadata/site-failure.txt")))
+      coding_input <- file.path(root, "inputs/final/coding-reviewed.csv")
+      consensus_input <- file.path(root, "inputs/final/consensus-reviewed.csv")
+      file.copy(file.path(config$path(config$settings$paths$analysis), "coding.csv"), coding_input)
+      file.copy(file.path(config$path(config$settings$paths$analysis), "consensus.csv"), consensus_input)
+      coding_hash <- digest::digest(file = coding_input, algo = "sha256", serialize = FALSE)
+      consensus_hash <- digest::digest(file = consensus_input, algo = "sha256", serialize = FALSE)
+      app$run("--analyze")
+      analysis_path <- config$path(config$settings$paths$analysis)
+      testthat::expect_identical(digest::digest(file = file.path(analysis_path, "independent-input.csv"), algo = "sha256", serialize = FALSE), coding_hash)
+      testthat::expect_identical(digest::digest(file = file.path(analysis_path, "consensus-input.csv"), algo = "sha256", serialize = FALSE), consensus_hash)
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- TRUE
       partial <- capture.output(app$run("--github"))
       testthat::expect_true(any(grepl("diagnósticos registrados", partial)))
       testthat::expect_false(identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash))
-      invisible(capture.output(app$run("--analyze")))
+      testthat::expect_error(capture.output(app$run("--analyze")), "Unidade fora da amostra")
       testthat::expect_false(dir.exists(file.path(root, ".run-lock")))
+      unlink(c(coding_input, consensus_input))
       failure <- FALSE
       app$run("--github")
       app$run("--huggingface")
       inject_gap <- TRUE
-      output <- capture.output(app$run(c("--mode", "run")))
+      output <- capture.output(app$run("--run"))
       inject_gap <- FALSE
       output_text <- paste(output, collapse = "\n")
       testthat::expect_true(gap_recorded)

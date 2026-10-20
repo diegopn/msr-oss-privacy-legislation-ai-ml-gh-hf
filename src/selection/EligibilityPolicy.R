@@ -21,10 +21,13 @@ EligibilityPolicy <- R6::R6Class("EligibilityPolicy",
   private = list(
     license = NULL, settings = NULL,
     exclusion = function(repo) {
+      kernel_disabled_unknown <- identical(repo$platform, "huggingface") &&
+        identical(repo$type, "kernel") && is.null(repo$disabled)
+      disabled <- if (kernel_disabled_unknown) FALSE else !identical(repo$disabled, FALSE)
       reasons <- c(unavailable = !isTRUE(repo$available),
         visibility_unknown_or_private = !identical(repo$private, FALSE),
-        disabled = isTRUE(repo$disabled),
-        gated_or_unknown = identical(repo$platform, "huggingface") && !identical(repo$type, "space") && !identical(repo$gated, FALSE),
+        disabled_or_unknown = disabled,
+        gated_or_unknown = identical(repo$platform, "huggingface") && !identical(repo$gated, FALSE),
         license_not_approved = !private$license$accepts(repo$license),
         fork = !private$settings$accept_forks && isTRUE(repo$fork),
         archived = !private$settings$accept_archived && isTRUE(repo$archived))

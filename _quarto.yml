@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: _site
   pre-render:
-    - Rscript main.R --mode prepare-site
+    - Rscript scripts/internal.R prepare-site
   render:
     - /index.qmd
   resources:
@@ -27,8 +27,6 @@ website:
         text: Método
       - href: "#dados"
         text: Amostra
-      - href: "#rq3"
-        text: Etapas · RQ3
       - href: "#reproducao"
         text: Execução
       - href: "#limites"

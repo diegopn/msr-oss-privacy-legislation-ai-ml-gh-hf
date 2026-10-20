@@ -14,7 +14,6 @@ SiteWriter <- R6::R6Class("SiteWriter",
         ELIGIBLE = state$eligible, REPOSITORIES_WITH_EVIDENCE = state$repositories_with_evidence,
         PROVENANCE = state$provenance,
         CUTOFF = private$config$settings$protocol$cutoff,
-        RQ3_STATUS = state$rq3_message, RQ3_RESULTS = state$rq3_table,
         REFERENCES = private$references())
       for (name in names(values)) text <- gsub(paste0("{{", name, "}}"), values[[name]], text, fixed = TRUE)
       if (grepl("\\{\\{[A-Z_]+\\}\\}", text)) stop("Marcador de template sem valor")
@@ -38,11 +37,9 @@ SiteWriter <- R6::R6Class("SiteWriter",
       selection <- SiteDataSource$new(private$config)$select()
       if (selection$source == "pilot") return(private$pilot_state(selection$summary))
       result <- list(source = "official", status = "analysis_pending",
-        message = "Coleta oficial integral concluída. Avaliação humana pendente.",
+        message = "Coleta oficial integral concluída.",
         catalogued = "—", eligible = "—", repositories_with_evidence = "—", generated = private$tools$now(),
         source_run_ids = selection$record$run_ids, coverage = private$public_coverage(selection$record$coverage),
-        rq3_status = "human_evaluation_pending", rq3_message = "RQ3 pendente: ainda não há anotações reais de etapas e consenso importados.",
-        rq3_table = "As etapas não são atribuídas automaticamente. Não há resultados humanos para apresentar.",
         provenance = private$provenance(selection$record, "official"))
       store <- AuditStore$new(selection$path, private$config, readonly = TRUE)
       on.exit(store$close(), add = TRUE)
@@ -57,9 +54,9 @@ SiteWriter <- R6::R6Class("SiteWriter",
       runs <- unname(unlist(selection$record$run_ids, use.names = FALSE))
       manifest_runs <- vapply(data$runs, function(run) run$run_id, "")
       if (!identical(data$config_hash, private$config$fingerprint) || !identical(runs, manifest_runs)) return(result)
-      result$status <- "ready_for_human_review"
-      result$message <- "Coleta oficial integral e amostragem concluídas. Avaliação humana pendente; categorias não atribuídas automaticamente."
-      private$stage_results(result, data)
+      result$status <- "analysis_ready"
+      result$message <- "Coleta oficial integral e amostragem concluídas."
+      result
     },
     pilot_state = function(summary) {
       coverage <- summary$coverage
@@ -71,53 +68,8 @@ SiteWriter <- R6::R6Class("SiteWriter",
         collected = summary$collected, source_run_ids = summary$run_ids,
         coverage = private$public_coverage(coverage), limits = summary$limits,
         spaces_included = isTRUE(summary$spaces_included),
-        rq3_status = "human_evaluation_pending",
-        rq3_message = "RQ3 pendente: ainda não há anotações reais de etapas e consenso importados.",
-        rq3_table = "As etapas não são atribuídas automaticamente. Não há resultados humanos para apresentar.",
         provenance = private$provenance(summary, "pilot"))
       result
-    },
-    stage_results = function(result, manifest) {
-      rq3 <- manifest$rq3
-      if (!private$stage_current(rq3)) return(result)
-      result$rq3_status <- rq3$status
-      if (rq3$status == "human_evaluation_pending") return(result)
-      result$rq3_message <- if (rq3$status == "human_evaluation_complete")
-        "RQ3: duas avaliações independentes e consenso importados para toda a amostra. Contrastes inferenciais continuam sujeitos à adequação do desenho."
-        else "RQ3 parcialmente anotada: há avaliações ou consensos pendentes. As descrições disponíveis são provisórias."
-      if (rq3$coverage$consensus_complete > 0L) result$rq3_table <- private$stage_table(utils::read.csv(private$config$path("outputs/tables/rq3/stages.csv")))
-      result
-    },
-    stage_current = function(rq3) {
-      if (!identical(rq3$codebook_version, private$config$stages$version) ||
-          !identical(rq3$codebook_hash, private$config$stage_fingerprint)) return(FALSE)
-      expected <- file.path("outputs/tables/rq3", c("stages.csv", "agreement.csv", "stage-categories.csv", "contrasts.csv", "examples.csv"))
-      if (!setequal(names(rq3$sha256), expected)) return(FALSE)
-      for (file in expected) {
-        path <- private$config$path(file)
-        if (!file.exists(path) || digest::digest(file = path, algo = "sha256", serialize = FALSE) != rq3$sha256[[file]]) return(FALSE)
-      }
-      TRUE
-    },
-    stage_table = function(rows) {
-      lines <- c("| Etapa | GitHub n/N (%) | Hugging Face n/N (%) |", "|---|---:|---:|")
-      for (stage in private$config$stages$stages) {
-        gh <- rows[rows$stage_id == stage$id & rows$platform == "github", ]
-        hf <- rows[rows$stage_id == stage$id & rows$platform == "huggingface", ]
-        lines <- c(lines, paste0("| ", stage$label, " | ", private$rate(gh), " | ", private$rate(hf), " |"))
-      }
-      lines <- c(lines, "", "| Hub | Indeterminadas | Etapas pendentes em relevantes | Relevância pendente |",
-        "|---|---:|---:|---:|")
-      for (platform in c("github", "huggingface")) {
-        row <- rows[rows$platform == platform, ][1L, ]
-        label <- if (platform == "github") "GitHub" else "Hugging Face"
-        lines <- c(lines, sprintf("| %s | %d | %d | %d |", label, row$n_indeterminate, row$n_stage_pending, row$n_relevance_pending))
-      }
-      paste(lines, collapse = "\n")
-    },
-    rate = function(row) {
-      value <- if (is.na(row$proportion)) "indefinida" else sprintf("%.1f%%", 100 * row$proportion)
-      sprintf("%d/%d (%s)", row$n_stage, row$denominator, value)
     },
     number = function(value) {
       if (is.null(value) || !length(value) || is.na(value[[1L]])) return("0")
@@ -163,7 +115,7 @@ SiteWriter <- R6::R6Class("SiteWriter",
         fallback <- sprintf(paste0("<strong>Dados preliminares e limitados do piloto.</strong> Execuções %s (GitHub) e %s (Hugging Face), entre %s e %s UTC. Protocolo %s; corte %s UTC. ",
           "Cobertura de repositórios únicos: GitHub, %s catalogados, %s elegíveis e %s com menções a leis; Hugging Face, %s catalogados, %s elegíveis e %s com menções a leis. ",
           "Spaces: %s; Kernels: %s. Limites aplicados: até %s repositórios descobertos e %s elegíveis por tipo no HF, %s Discussions por repositório e até %s resultados de busca por termo no GitHub. ",
-          "Estes números não representam a população; nenhuma avaliação humana é inferida."),
+          "Estes números não representam a população."),
           values$github_run, values$hf_run, values$started, values$finished, values$protocol_version, values$cutoff, values$github_catalogued,
           values$github_eligible, values$github_evidence_repositories, values$hf_catalogued, values$hf_eligible,
           values$hf_evidence_repositories, if (isTRUE(data$spaces_included)) sprintf("busca executada (%s repositórios encontrados)", values$spaces_count) else "não incluídos neste piloto",
@@ -180,7 +132,7 @@ SiteWriter <- R6::R6Class("SiteWriter",
         key <- "official"
         fallback <- sprintf(paste0("<strong>Coleta oficial integral validada em %s UTC.</strong> Execuções %s (GitHub) e %s (Hugging Face). ",
           "Cobertura verificada de repositórios únicos: GitHub, %s catalogados, %s elegíveis e %s com menções a leis; ",
-          "Hugging Face, %s catalogados, %s elegíveis e %s com menções a leis. A avaliação humana permanece separada da conclusão da coleta."),
+          "Hugging Face, %s catalogados, %s elegíveis e %s com menções a leis."),
           values$saved, values$github_run, values$hf_run, values$github_catalogued, values$github_eligible,
           values$github_evidence_repositories, values$hf_catalogued, values$hf_eligible, values$hf_evidence_repositories)
       }

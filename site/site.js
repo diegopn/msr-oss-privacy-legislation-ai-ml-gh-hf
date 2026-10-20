@@ -9,7 +9,6 @@
     "#visao-geral": "nav_project",
     "#metodologia": "nav_method",
     "#dados": "nav_sample",
-    "#rq3": "nav_rq3",
     "#reproducao": "nav_execution",
     "#limites": "nav_limits",
     "#referencias-metodologicas": "nav_references"
@@ -69,9 +68,6 @@
         const state = await summary.json();
         const status = document.querySelector("#collection-status");
         if (status && copy[state.status]) status.textContent = copy[state.status];
-        const rq3Status = document.querySelector("#rq3-status");
-        const rq3Key = `rq3_${state.rq3_status}`;
-        if (rq3Status && copy[rq3Key]) rq3Status.textContent = copy[rq3Key];
       }
 
       document.querySelectorAll("#quarto-header .navbar-nav .nav-link").forEach(link => {

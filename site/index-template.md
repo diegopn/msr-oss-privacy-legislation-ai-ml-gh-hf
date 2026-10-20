@@ -1,6 +1,6 @@
 ---
 title: "Discussões sobre privacidade em OSS de IA/ML"
-subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
+subtitle: "GitHub e Hugging Face"
 ---
 
 <div class="hero-note"><p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions dos repositórios do Hugging Face.</p></div>
@@ -20,7 +20,7 @@ subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
 
 ## Método {#metodologia}
 
-<p data-i18n="method">A descoberta precede a seleção dos repositórios. A confirmação registra ocorrências textuais e sua procedência; as categorias de privacidade são atribuídas pelos avaliadores.</p>
+<p data-i18n="method">A descoberta precede a seleção dos repositórios. A confirmação registra ocorrências textuais e sua procedência; as categorias seguem o codebook do estudo.</p>
 
 | Questão | Objeto |
 |---|---|
@@ -41,39 +41,22 @@ subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
 
 <p data-i18n="github">GitHub: busca global de termos legais em issues públicas e fechadas; exclui pull requests e autores de issues identificados como bots. O repositório precisa de um sinal de descoberta de IA/ML e evidência técnica. A coleta lê manifestos na raiz e README quando necessário; não percorre código-fonte ou subdiretórios.</p>
 
-<p data-i18n="hf">Hugging Face: descoberta de modelos, datasets, Spaces e Kernels por cada licença OSI; Buckets ficam fora da coleta porque não são unidades com Discussions. Os campos variam por tipo: Spaces não expõem gated, e Kernels têm metadados próprios. A rota de listagem de Kernels usada pelo coletor não está entre os métodos gerais oficialmente documentados; sua paginação e cobertura precisam de validação ao vivo antes de essa parte ser considerada integral. Metadados e README confirmam licença e finalidade IA/ML. Apenas Discussions fechadas são aceitas; pull requests e discussões iniciadas por bots são excluídos. Comentários de bots em discussões elegíveis são preservados.</p>
+<p data-i18n="hf">Hugging Face: descoberta de modelos, datasets, Spaces e Kernels por cada licença OSI; Buckets ficam fora da coleta porque não são unidades com Discussions. Os campos variam por tipo: a listagem de Spaces pode omitir gated, então o coletor consulta os detalhes. Como esse campo é opcional, valor ausente ou nulo significa não gated; valores auto, manual ou inválidos são excluídos. Kernels têm metadados próprios. A rota de listagem de Kernels usada pelo coletor não está entre os métodos gerais oficialmente documentados; sua paginação e cobertura precisam de validação ao vivo antes de essa parte ser considerada integral. Metadados e README confirmam licença e finalidade IA/ML. Apenas Discussions fechadas são aceitas; pull requests e discussões iniciadas por bots são excluídos. Comentários de bots em discussões elegíveis são preservados.</p>
 
 <p data-i18n="licenses">Ambas as plataformas: licença SPDX reconhecida pela lista OSI local. O corte temporal se aplica à criação de Issues e Discussions, não à criação do repositório. Todos os identificadores em expressões de licença precisam ser aprovados. Forks e repositórios arquivados são aceitos; não há limiares de popularidade.</p>
 
-<p data-i18n="concepts">20 conceitos: listas originais e revisadas do pacote científico, com limites de palavra e procedência separada. 24 categorias: codebook humano, sem classificação automática por palavras-chave.</p>
+<p data-i18n="concepts">20 conceitos: listas originais e revisadas do pacote científico, com limites de palavra e procedência separada. 24 categorias definidas no codebook, sem classificação automática por palavras-chave.</p>
 
-## Amostra e avaliação {#dados}
+## Amostra {#dados}
 
 <p data-i18n="sampling">Estratos: plataforma × tipo de repositório × lei. Cochran com correção para população finita: confiança de 99%, margem de 5%, proporção de 50%; tamanho arredondado para cima e limitado à população. Sorteio sem reposição, semente 20260920 acrescida do índice do estrato.</p>
 
-<p data-i18n="coding">Cada discussão aparece uma vez por avaliador na planilha CSV, mesmo quando participa de várias leis. Dois avaliadores por padrão. Relevância: 0, 1 ou vazio. Categorias: IDs do codebook separados por ponto e vírgula, sem repetição. Kappa usa apenas pares preenchidos; casos sem pares ou com concordância esperada igual a 1 permanecem indefinidos.</p>
-
 <p data-i18n="exports">Os CSV de população, amostra, estratos, codificação e codebook, além do manifesto com hashes, ficam em inputs/final/collection para as análises posteriores. Os dados brutos e tokens não são copiados para o site.</p>
-
-## Etapas do desenvolvimento — RQ3 {#rq3}
-
-<p id="rq3-status" role="status">{{RQ3_STATUS}}</p>
-
-<p data-i18n="rq3_instrument">Instrumento ml-stages-1.0.0: requisitos do modelo, coleta de dados, limpeza, rotulagem, engenharia de características, treinamento, avaliação, implantação e monitoramento. Eixo separado das 24 categorias, inspirado em Amershi et al. (2019). As definições operacionais e adaptações para LLM são desta pesquisa; etapas não são inferidas pelo hub.</p>
-
-<p data-i18n="rq3_review">Dois avaliadores cobrem toda a amostra independentemente; o consenso é preservado em outra planilha. Cada etapa identificada exige trecho e artefato de origem. Pendência difere de etapa indeterminada após avaliação. A concordância por etapa é calculada antes do consenso; pares indeterminados ou não relevantes não são tratados como ausência da etapa.</p>
-
-{{RQ3_RESULTS}}
-
-<p data-i18n="rq3_denominator">Descrições da amostra manual, sem extrapolação para a população: N é o número de discussões relevantes com anotação de etapa concluída, incluindo indeterminadas. Pendências ficam separadas. Uma discussão pode ter várias etapas e as proporções podem somar mais de 100%. Denominador zero produz proporção indefinida; zero discussões relevantes no HF é um resultado válido.</p>
-
-<p data-i18n="rq3_inference">Para cada uma das nove etapas: H0, a proporção em discussões relevantes é igual entre os hubs; H1, difere. Contrastes exigem projetos comparáveis, tratamento do agrupamento por projeto e vínculos entre hubs, efeitos, intervalos e ajuste de Holm. Enquanto faltarem esses requisitos, são registrados como não testáveis. Diferenças não demonstram conformidade nem maior preocupação jurídica de um hub.</p>
 
 ## Execução local {#reproducao}
 
 ```bash
-Rscript main.R --check
-Rscript main.R --test
+Rscript main.R --help
 Rscript main.R --pilot
 Rscript main.R --github
 Rscript main.R --huggingface
@@ -95,7 +78,7 @@ quarto preview
 
 <p data-i18n="limits">Menção textual não decide conformidade ou violação legal. O total de repositórios GitHub corresponde aos encontrados nas buscas de discussões sobre legislação, sem estimar todos os repositórios de IA/ML da plataforma. A descoberta no Hugging Face depende da indexação de licenças. O piloto demonstra funcionamento em um recorte limitado; cobertura, tempo e consumo de cota da coleta completa exigem validação.</p>
 
-<p data-i18n="unfinished">BERT, avaliação humana e todas as análises da dissertação não são executados automaticamente. A precisão da seleção de IA/ML e a cobertura das licenças ainda precisam de validação empírica.</p>
+<p data-i18n="unfinished">A precisão da seleção de IA/ML e a cobertura das licenças ainda precisam de validação empírica.</p>
 
 ## Referências {#referencias-metodologicas}
 

@@ -34,14 +34,14 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       license <- private$licenses(metadata, card)
       list(key = private$tools$key("huggingface", type, id), platform = "huggingface",
         type = type, id = id, created = private$tools$scalar(metadata$createdAt),
-        private = metadata$private, gated = metadata$gated, disabled = metadata$disabled,
+        private = metadata$private, gated = private$gate_status(metadata$gated), disabled = metadata$disabled,
         available = available, license = license, metadata = metadata, card = card)
     },
     discussions = function(repo, limit = Inf) {
       private$http$progress$activity("Buscando Discussions")
       output <- list()
       page <- 0L
-      previous_start <- -1L
+      expected_start <- 0L
       repeat {
         url <- paste0(self$api_url(repo$type, repo$id), "/discussions?p=", page, "&type=discussion")
         response <- private$http$get(url, "pages", optional = "discussions")
@@ -50,8 +50,8 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
           return(output)
         }
         data <- response$data
-        if (!private$validate_page(data, previous_start, url)) return(output)
-        previous_start <- data$start
+        if (!private$validate_page(data, expected_start, url)) return(output)
+        expected_start <- data$start + length(data$discussions)
         output <- c(output, data$discussions)
         if (data$start + length(data$discussions) >= data$count || length(output) >= limit) break
         page <- page + 1L
@@ -88,7 +88,8 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       private$standard_metadata_complete(metadata)
     },
     space_metadata_complete = function(metadata) {
-      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled)
+      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled) &&
+        private$gate_flag(metadata$gated)
     },
     kernel_metadata_complete = function(metadata) {
       private$logical_flag(metadata$private) && private$gate_flag(metadata$gated)
@@ -102,6 +103,12 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
     },
     gate_flag = function(value) {
       private$logical_flag(value) || identical(value, "auto") || identical(value, "manual")
+    },
+    gate_status = function(value) {
+      if (is.null(value)) return(FALSE)
+      if (private$logical_flag(value)) return(value)
+      if (identical(value, "auto") || identical(value, "manual")) return(TRUE)
+      NA
     },
     valid_metadata = function(metadata) {
       is.list(metadata) && (is.null(metadata$cardData) || is.list(metadata$cardData))
@@ -124,8 +131,8 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       is.list(data$discussions) && all(vapply(data$discussions, is.list, logical(1)))
     },
     valid_page_number = function(value) is.numeric(value) && length(value) == 1L && is.finite(value) && value >= 0,
-    invalid_discussion_cursor = function(data, previous) {
-      data$start <= previous || (!length(data$discussions) && data$start < data$count)
+    invalid_discussion_cursor = function(data, expected_start) {
+      data$start != expected_start || (!length(data$discussions) && data$start < data$count)
     },
     discovery_url = function(type, license) {
       properties <- switch(type,
@@ -141,9 +148,11 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       url
     },
     readable = function(metadata, type) {
-      visible <- identical(metadata$private, FALSE) && !isTRUE(metadata$disabled)
-      if (type == "space") return(visible)
-      visible && identical(metadata$gated, FALSE)
+      disabled <- if (identical(type, "kernel")) {
+        is.null(metadata$disabled) || identical(metadata$disabled, FALSE)
+      } else identical(metadata$disabled, FALSE)
+      visible <- identical(metadata$private, FALSE) && disabled
+      visible && identical(private$gate_status(metadata$gated), FALSE)
     },
     card = function(type, id) {
       prefix <- switch(type, dataset = "datasets/", space = "spaces/", kernel = "kernels/", "")
@@ -172,9 +181,9 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       if (!length(candidates)) return(NULL)
       vapply(unlist(candidates, use.names = FALSE), private$license$canonical, "")
     },
-    validate_page = function(data, previous, url) {
-      if (!private$valid_discussion_page(data) || private$invalid_discussion_cursor(data, previous)) {
-        private$store$problem("invalid_discussion_cursor", url, "Página ausente, vazia ou repetida")
+    validate_page = function(data, expected_start, url) {
+      if (!private$valid_discussion_page(data) || private$invalid_discussion_cursor(data, expected_start)) {
+        private$store$problem("invalid_discussion_cursor", url, "Página vazia, repetida ou fora da sequência")
         return(FALSE)
       }
       TRUE

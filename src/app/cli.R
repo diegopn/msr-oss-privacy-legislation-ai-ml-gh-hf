@@ -12,10 +12,7 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
     run = function(args) {
       options <- private$options(args)
       if (options$mode == "help") return(private$help())
-      private$config <- ProjectConfig$new(private$root, options$config)
-      if (options$mode == "check") return(private$check())
-      if (options$mode == "test") return(private$test())
-      if (options$mode == "prepare-site") return(SiteWriter$new(private$config)$prepare())
+      private$config <- ProjectConfig$new(private$root)
       private$begin(options$mode)
       completed <- FALSE
       on.exit(if (!completed) private$progress$finish("Execução interrompida"), add = TRUE)
@@ -32,8 +29,8 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
     progress = NULL, started = NULL, site_failed = FALSE,
     begin = function(mode) {
       labels <- c(run = "Execução completa | GitHub + Hugging Face", pilot = "Piloto limitado | GitHub + Hugging Face",
-        github = "Coleta GitHub", huggingface = "Coleta Hugging Face", analyze = "Preparação dos dados e amostra", site = "Geração do site")
-      steps <- c(run = 4L, pilot = 2L, github = 2L, huggingface = 2L, analyze = 2L, site = 1L)
+        github = "Coleta GitHub", huggingface = "Coleta Hugging Face", analyze = "Preparação dos dados e amostra")
+      steps <- c(run = 4L, pilot = 2L, github = 2L, huggingface = 2L, analyze = 2L)
       private$site_failed <- FALSE
       private$progress$begin(paste0(labels[[mode]], " | corte: ", private$config$settings$protocol$cutoff),
         steps[[mode]], private$started)
@@ -42,79 +39,29 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
     execute = function(options) {
       lock <- RunLock$new(private$root)
       on.exit(lock$release(), add = TRUE)
-      if (options$mode == "site") {
-        private$progress$stage("Geração do site")
-        path <- SiteWriter$new(private$config)$render()
-        private$progress$event(paste("Site gerado:", path))
-        return(path)
-      }
       if (options$mode == "analyze") return(private$analyze(options))
       private$collect(options)
     },
     options = function(args) {
-      args <- private$normalize_flags(args)
-      result <- list(mode = "help", config = "config/settings.yml", coding = NULL, consensus = NULL)
-      index <- 1L
-      mode_set <- FALSE
-      while (index <= length(args)) {
-        option <- args[[index]]
-        if (option %in% c("--help", "-h")) return(result)
-        private$validate_option(option, index, length(args))
-        value <- args[[index + 1L]]
-        name <- sub("^--", "", option)
-        if (name == "mode" && mode_set) stop("Selecione apenas uma modalidade por execução")
-        if (name == "mode") mode_set <- TRUE
-        result[[name]] <- value
-        index <- index + 2L
-      }
-      private$validate_options(result)
-      result
-    },
-    normalize_flags = function(args) {
-      aliases <- c("--pilot" = "pilot", "--run" = "run", "--github" = "github",
-        "--huggingface" = "huggingface", "--analyze" = "analyze",
-        "--test" = "test", "--check" = "check", "--site" = "site")
-      unlist(lapply(args, function(arg) {
-        if (arg %in% names(aliases)) return(c("--mode", unname(aliases[[arg]])))
-        arg
-      }), use.names = FALSE)
-    },
-    validate_option = function(option, index, size) {
-      if (!option %in% c("--mode", "--config", "--coding", "--consensus") || index == size) stop("Opção inválida: ", option)
-    },
-    validate_options = function(result) {
-      allowed <- c("help", "check", "test", "site", "prepare-site", "pilot", "github", "huggingface", "analyze", "run")
-      if (!result$mode %in% allowed) stop("Modalidade inválida: ", result$mode)
-      if (!is.null(result$coding) && !result$mode %in% c("analyze", "run")) stop("--coding exige analyze ou run")
-      if (!is.null(result$consensus) && (!result$mode %in% c("analyze", "run") || is.null(result$coding))) stop("--consensus exige --coding em analyze ou run")
+      modes <- c("--pilot" = "pilot", "--run" = "run", "--github" = "github",
+        "--huggingface" = "huggingface", "--analyze" = "analyze")
+      if (!length(args)) return(list(mode = "help"))
+      allowed <- c(names(modes), "--help", "-h")
+      unknown <- args[!args %in% allowed]
+      if (length(unknown)) stop("Opção inválida: ", unknown[[1L]])
+      if (length(args) > 1L) stop("Selecione apenas uma modalidade por execução")
+      if (args[[1L]] %in% c("--help", "-h")) return(list(mode = "help"))
+      list(mode = unname(modes[[args[[1L]]]]))
     },
     help = function() {
       cat(paste(c("Projeto de discussões sobre legislação de privacidade em IA/ML",
-        "Uso: Rscript main.R <modalidade> [--config arquivo] [--coding arquivo.csv] [--consensus arquivo.csv]",
         "Modalidades: --pilot | --run | --github | --huggingface | --analyze",
-        "Forma alternativa: --mode pilot|run|github|huggingface|analyze",
-        "Apoio: check | test | site | help",
+        "Ajuda: --help ou -h",
         "Sem argumentos: ajuda. Nunca inicia uma coleta por acidente.",
         "O piloto não gera o site; coletas e análise geram o site ao concluir.",
-        "Instalação local: Rscript main.R --install.",
+        "Arquivos preenchidos de revisão são lidos de caminhos fixos em inputs/final/.",
         "O piloto substitui seus dados anteriores; coletas completas preservam histórico.",
-        "Testes não consultam APIs.",
         "Publicação é manual; nenhuma execução faz commit, push ou deploy."), collapse = "\n"), "\n")
-    },
-    check = function() {
-      cat("Configuração válida. Corte: ", private$config$settings$protocol$cutoff, "\n", sep = "")
-      cat("Tópicos: 24; leis: 4; termos legais: 7; conceitos: ", length(private$config$concepts$concepts),
-          "; categorias: ", length(private$config$taxonomy$categories), "\n", sep = "")
-      private$config$require_references()
-      cat("Referências disponíveis; fingerprint: ", private$config$fingerprint, "\n", sep = "")
-      cat("Quarto: ", if (nzchar(Sys.which("quarto"))) "disponível" else "ausente", "\n", sep = "")
-      invisible(TRUE)
-    },
-    test = function() {
-      if (!requireNamespace("testthat", quietly = TRUE) || !requireNamespace("cyclocomp", quietly = TRUE)) {
-        stop("Instale testthat e cyclocomp para executar a suíte")
-      }
-      TestRunner$new(private$config, private$environment)$run()
     },
     analyze = function(options) {
       path <- private$config$path(private$config$settings$paths$database)
@@ -123,7 +70,8 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       on.exit(store$close(), add = TRUE)
       private$progress$stage("Preparação dos CSVs e amostra")
       private$progress$activity("Verificando coletas e preparando a amostra")
-      result <- AnalysisExporter$new(private$config, store)$run(options$coding, options$consensus)
+      result <- AnalysisExporter$new(private$config, store)$run(private$review_file("coding_reviewed"),
+        private$review_file("consensus_reviewed"))
       private$progress$event(paste("CSVs e amostra preparados em:", result$path))
       private$site()
       invisible(result)
@@ -144,7 +92,8 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       if (complete) {
         private$progress$stage("Preparação dos CSVs e amostra")
         private$progress$activity("Verificando coletas e preparando a amostra")
-        result <- AnalysisExporter$new(private$config, store)$run(options$coding, options$consensus)
+        result <- AnalysisExporter$new(private$config, store)$run(private$review_file("coding_reviewed"),
+          private$review_file("consensus_reviewed"))
         private$progress$event(paste("CSVs e amostra preparados em:", result$path))
       }
       if (pilot) private$pilot_report(store)
@@ -163,6 +112,12 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
         "O último snapshot oficial válido será mantido." else "O resumo preliminar do piloto será mantido."
       private$progress$event(paste("Fonte do site mantida:", transition$reason, retained))
       invisible(transition)
+    },
+    review_file = function(name) {
+      paths <- c(coding_reviewed = "inputs/final/coding-reviewed.csv",
+        consensus_reviewed = "inputs/final/consensus-reviewed.csv")
+      path <- private$config$path(unname(paths[[name]]))
+      if (file.exists(path)) path else NULL
     },
     pilot_report = function(store) {
       path <- file.path(dirname(private$config$path(private$config$settings$paths$pilot_database)), "summary.json")

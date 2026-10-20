@@ -3,14 +3,11 @@
 Projeto em **R com R6** para identificar menções a GDPR, CCPA, CPRA e Data
 Protection Act em issues do GitHub e Discussions dos repositórios do
 Hugging Face. Preserva as respostas da coleta, confirma menções textuais e
-prepara uma amostra estratificada para avaliação humana.
-Integra uma classificação humana independente por etapas de desenvolvimento
-de IA/ML/LLM para a RQ3, com evidências, consenso e descrições por hub.
+prepara uma amostra estratificada e exportações para análises posteriores.
 
-Uma menção não estabelece conformidade ou violação legal. O projeto não executa
-BERT, não realiza a avaliação humana e não implementa todas as análises da
-dissertação. A precisão da identificação de IA/ML e a cobertura da descoberta
-por licença precisam de validação empírica.
+Uma menção não estabelece conformidade ou violação legal. A precisão da
+identificação de IA/ML e a cobertura da descoberta por licença precisam de
+validação empírica.
 
 Cada repositório recebe uma decisão automática de elegibilidade ou exclusão,
 com o motivo registrado. Evidência insuficiente de IA/ML resulta em exclusão
@@ -18,8 +15,6 @@ documentada; a coleta não cria uma fila de revisão de repositórios.
 Os conceitos são registrados nas unidades principais, comentários e eventos,
 com origem identificável. As exportações separam título/texto inicial do
 contexto dos comentários para RQ1, sinalizando texto inicial HF não comprovado.
-Há kappa de relevância e por etapa, antes do consenso; a concordância das
-24 categorias e as outras análises da dissertação permanecem fora desta alteração.
 
 RQ1 trata dos direitos e princípios mencionados; RQ2, das preocupações e da
 cobertura da taxonomia original; RQ3, das etapas às quais as preocupações se
@@ -28,25 +23,42 @@ geral integra RQ1 e RQ2. Não há RQ4 ou experimento antes/depois da GDPR.
 
 ## Requisitos e instalação
 
-R ≥ 4.6.0 e Quarto no PATH. O lockfile foi gerado com R 4.6.1, versão usada na
-CI. Não é necessário usar RStudio ou um arquivo `.Rproj`.
-Pacotes de produção: `R6`, `yaml`, `jsonlite`, `httr2`, `DBI`, `RSQLite`, `digest`.
-Os testes usam `testthat` e `cyclocomp`.
+R ≥ 4.6.0. Quarto precisa estar no PATH para renderizar o site, que é atualizado
+automaticamente ao concluir uma coleta completa ou uma análise. Não é necessário
+usar RStudio ou um arquivo `.Rproj`. A CI usa R 4.6.1.
 
-A execução exige R 4.6.0 ou superior antes de carregar dependências, instalar
-pacotes ou iniciar qualquer modalidade. Versões anteriores são recusadas com
-uma mensagem que identifica a versão instalada.
+| Pacote | Versão de referência | Uso |
+|---|---:|---|
+| `R6` | 2.6.1 | Produção |
+| `yaml` | 2.3.12 | Produção |
+| `jsonlite` | 2.0.0 | Produção |
+| `httr2` | 1.3.0 | Produção |
+| `DBI` | 1.3.0 | Produção |
+| `RSQLite` | 3.53.3 | Produção |
+| `digest` | 0.6.39 | Produção |
+| `testthat` | 3.3.2 | Somente testes da CI |
+| `cyclocomp` | 1.1.1 | Somente testes da CI |
+
+Instale os pacotes diretos nas versões de referência. O `pak` também instala as
+dependências indiretas exigidas por eles ([documentação de versões e pacotes do
+pak](https://pak.r-lib.org/reference/pak_package_sources.html)); não é
+dependência do programa depois da instalação.
 
 ```bash
-Rscript main.R --install
-Rscript main.R --mode check
-Rscript main.R --mode test
+Rscript -e '
+install.packages("pak", repos = "https://cloud.r-project.org")
+pak::pkg_install(c(
+  "R6@2.6.1", "yaml@2.3.12", "jsonlite@2.0.0", "httr2@1.3.0",
+  "DBI@1.3.0", "RSQLite@3.53.3", "digest@0.6.39",
+  "testthat@3.3.2", "cyclocomp@1.1.1"
+))
+'
 ```
 
-`--install` restaura as versões registradas em `renv.lock` para a biblioteca
-isolada do projeto. A primeira restauração requer acesso ao CRAN. Sistemas Linux
-podem precisar dos pacotes de desenvolvimento de libcurl e OpenSSL para compilar
-dependências. A instalação não inicia uma coleta.
+É necessário ter acesso ao CRAN durante a instalação. Em Linux, o sistema pode
+precisar de bibliotecas de desenvolvimento para compilar pacotes, como libcurl,
+OpenSSL e libuv. O programa verifica a versão mínima do R e informa dependências
+ausentes; consulte esta lista para instalá-las.
 
 Configure os tokens em `.env`, a partir de `.env.example`, ou nas variáveis
 `GITHUB_TOKEN` e `HF_TOKEN`. O arquivo existente `.env` foi preservado. Tokens
@@ -55,48 +67,36 @@ Coletas anônimas são possíveis, sujeitas às cotas do serviço.
 
 ## Execução
 
-`main.R` é a única entrada procedural. Classes de produção e de testes têm um
-arquivo próprio. Sem argumentos, o programa mostra a ajuda.
+A entrada pública é `main.R`; sem argumentos, ela mostra a ajuda. O arquivo
+`scripts/internal.R` fica reservado para tarefas da CI e para a preparação do
+site pelo Quarto.
 
 | Modalidade | Comando | Efeito |
 |---|---|---|
-| Piloto | `Rscript main.R --mode pilot` | Coleta limitada das duas plataformas em banco próprio, sem gerar o site |
-| GitHub | `Rscript main.R --mode github` | Renova os dados GitHub, preservando Hugging Face, e gera o site |
-| Hugging Face | `Rscript main.R --mode huggingface` | Renova os dados Hugging Face, preservando GitHub, e gera o site |
-| Análise | `Rscript main.R --mode analyze` | Verifica as coletas, exporta a amostra e gera o site |
+| Piloto | `Rscript main.R --pilot` | Coleta limitada das duas plataformas em banco próprio, sem gerar o site |
+| GitHub | `Rscript main.R --github` | Renova os dados GitHub, preservando Hugging Face, e gera o site |
+| Hugging Face | `Rscript main.R --huggingface` | Renova os dados Hugging Face, preservando GitHub, e gera o site |
+| Análise | `Rscript main.R --analyze` | Verifica as coletas, processa arquivos de análise disponíveis, exporta resultados e gera o site |
 | Completa | `Rscript main.R --run` | Coleta ambas, analisa, promove o banco temporário e gera o site |
 
-As opções diretas são equivalentes e podem ser usadas como entrada principal:
-
-```bash
-Rscript main.R --pilot
-Rscript main.R --github
-Rscript main.R --huggingface
-Rscript main.R --analyze
-Rscript main.R --run
-```
-
-`--run` (ou `--mode run`) executa a coleta completa. O piloto não gera o site;
+`--run` executa a coleta completa. O piloto não gera o site;
 coletas GitHub e Hugging Face, `--run` e `--analyze` geram o site ao concluir.
-Não combine duas modalidades no mesmo comando.
+Execute uma modalidade por vez.
 
 As coletas individuais podem ocorrer em qualquer ordem. Somente uma modalidade
-é aceita por execução. `--config caminho.yml` seleciona a configuração. Cada
-nova coleta começa novamente sua plataforma. Não há retomada automática a partir
-de dados parciais.
+é aceita por execução. A configuração usada é `config/settings.yml`. Cada nova
+coleta começa novamente sua plataforma. Não há retomada automática a partir de
+dados parciais.
 
-Comandos de apoio:
+Ajuda e prévia local:
 
 ```bash
 Rscript main.R --help
-Rscript main.R --mode check
-Rscript main.R --mode test
-Rscript main.R --mode site
 quarto preview
 ```
 
-`prepare-site` é usado internamente pelo pre-render do Quarto. O site é uma
-apresentação estática dos artefatos locais; o Quarto não consulta APIs.
+O site é uma apresentação estática dos artefatos locais; o Quarto não consulta
+APIs. Os testes automatizados são executados pela CI.
 
 ## Organização
 
@@ -106,8 +106,7 @@ config/
   settings.yml                protocolo, vocabulários de IA/ML e limites
   osi-licenses.json           snapshot SPDX com identificadores aprovados OSI
   privacy-concepts.yml        20 conceitos; variantes e fontes separadas
-  taxonomy.yml                24 categorias do codebook humano
-  development-stages.yml      instrumento próprio e versionado para RQ3
+  taxonomy.yml                24 categorias do codebook
 src/
   bootstrap.R                 carregamento das classes e dependências
   app/                        CLI, composição e execução dos testes
@@ -124,7 +123,7 @@ src/
   selection/                  elegibilidade e confirmação de IA/ML
   storage/                    SQLite, auditoria, lock e fonte persistente do site
   data/                       população e textos para avaliação
-  analysis/                   validação, amostragem, concordância e descrição RQ3
+  analysis/                   validação, amostragem e processamento analítico
   reporting/                  exportação e site
 inputs/
   data/                       SQLite oficial, diário de coletas e archive/
@@ -136,11 +135,10 @@ inputs/
     archive/                  versões anteriores dos arquivos preparados
   reference/                  bibliografia e dados do pacote de replicação
 outputs/                      figuras, tabelas, relatórios e metadados de saída
-  tables/rq3/                 frequências, concordância, relações, exemplos e contrastes
-  reports/rq3.json            estado da avaliação e integridade dos resultados
-site/                         template, idiomas, tema e estado auditável da fonte
+site/                         template, idiomas, tema e registro da fonte selecionada
 _site/                        site Quarto gerado localmente, ignorado pelo Git
 tests/                        contratos e transporte simulado
+scripts/internal.R            tarefas internas da CI e do Quarto
 ```
 
 Os objetos R6 têm estrutura bloqueada. Os contratos verificam uma classe por
@@ -151,9 +149,11 @@ substituídos nos testes.
 
 ## Protocolo
 
-O corte inclusivo é **22/09/2026, em UTC**, nas duas plataformas. O corte
-histórico de 30/06/2024 pertence ao artigo-base. Datas ausentes ou inválidas não
-comprovam elegibilidade. A janela das discussões começa em 14/04/2016 para
+O corte inclusivo dos conteúdos é **22/09/2026, em UTC**, nas duas plataformas.
+O corte histórico de 30/06/2024 pertence ao artigo-base. Datas ausentes ou
+inválidas de Issues, Discussions, comentários e eventos não comprovam
+elegibilidade. A data de criação do repositório não é critério; o corte se aplica
+ao conteúdo analisado. A janela das discussões começa em 14/04/2016 para
 GDPR, 28/06/2018 para CCPA, 03/11/2020 para CPRA e 23/05/2018 para Data
 Protection Act. Comentários e eventos posteriores ao corte são descartados.
 
@@ -162,8 +162,8 @@ das leis são procurados literalmente, ignorando caixa, inclusive dentro de
 palavras maiores. Uma discussão pode ter várias leis e vários termos.
 Palavras-chave de conceitos e sinais GitHub de IA/ML respeitam limites de palavra.
 
-Projetos precisam ser disponíveis, públicos, criados até o corte, ter licença
-SPDX aprovada na lista OSI local e evidência suficiente de IA/ML. Todo
+Projetos precisam ser disponíveis e públicos, ter licença SPDX aprovada na
+lista OSI local e evidência suficiente de IA/ML. Todo
 identificador de licença em uma expressão precisa ser aprovado. Identificadores
 `LicenseRef`, licença ausente e licença desconhecida impedem inclusão. Operadores
 AND/OR, parênteses e exceções SPDX reconhecidas são validados. Aliases com caixa
@@ -194,10 +194,10 @@ Spaces usam a listagem geral paginada: a API documenta `filter` como filtro por
 tags e não oferece filtro por licença nesse endpoint. A licença de cada Space
 é validada localmente pelos metadados, tags e README; por isso, o limite de
 1.000 Spaces descobertos pode resultar em menos de 1.000 elegíveis. Buckets
-ficam fora da coleta porque não são unidades com Discussions. Os campos variam
-por tipo: Spaces não expõem `gated`; Kernels
-usam metadados próprios e `KernelInfo` não documenta campos como `createdAt`
-ou `disabled`. A documentação oficial sobre [repositórios Kernel](https://huggingface.co/docs/huggingface_hub/en/guides/repository)
+ficam fora da coleta porque não são unidades com Discussions. Spaces com acesso
+gated são excluídos. Kernels usam metadados próprios; `KernelInfo` não documenta
+campos como `createdAt` ou `disabled`. A documentação oficial sobre
+[repositórios Kernel](https://huggingface.co/docs/huggingface_hub/en/guides/repository)
 lista métodos de consulta de um Kernel, arquivos e referências, mas não documenta uma listagem geral de Kernels. A
 descoberta implementada usa `/api/kernels` como rota exploratória; sua paginação
 e cobertura precisam ser validadas contra respostas reais antes de uma coleta
@@ -235,17 +235,15 @@ posteriores ao corte; o programa não reconstrói integralmente o estado histór
 - `inputs/data/pilot/pilot.sqlite` e `summary.json`: banco e contagens do último piloto.
 - `inputs/raw/<execução>/<sha256>.body`: bytes das respostas científicas e integridade.
 - `inputs/raw/pilot/<execução>/<sha256>.body`: respostas apenas do último piloto.
-- `inputs/final/collection/`: população, amostra, estratos, codificações, codebook e manifesto.
+- `inputs/final/collection/`: população, amostra, estratos, codebook e manifesto.
 - `inputs/final/archive/`: versões anteriores dos arquivos preparados para análise.
 - `_site/`: site estático Quarto gerado localmente.
-- `site/collection-source.json`: fonte atual, registro da transição e histórico auditável.
+- `site/collection-source.json`: fonte selecionada e registro da transição.
 - `site/pilot-summary.json`: procedência e cobertura do piloto usados no site antes da transição.
 
 Os dados produzidos pela coleta ficam em `inputs`, pois serão a entrada das
 análises posteriores. `outputs/figures`, `outputs/tables` e `outputs/reports`
-ficam disponíveis para os resultados dessas análises. Uma planilha preenchida
-manualmente, como `inputs/final/coding-reviewed.csv`, permanece fora de
-`collection/` e não é substituída pelas exportações.
+ficam disponíveis para os resultados dessas análises.
 
 Cada novo piloto apaga suas subpastas `inputs/data/pilot` e `inputs/raw/pilot`
 antes da coleta. Apenas a última tentativa é mantida, mesmo quando falha:
@@ -289,7 +287,7 @@ Uma falha de renderização é registrada em `outputs/metadata/site-failure.txt`
 reportada separadamente da conclusão da coleta. O site mostra resultados
 pendentes quando faltam coletas ou análise compatível.
 
-## Amostragem e codificação
+## Amostragem
 
 Unidades: issues GitHub e Discussions Hugging Face com evidência legal, em
 projetos elegíveis. Estratos: plataforma × tipo de repositório × lei.
@@ -300,105 +298,9 @@ n0 = z² × 0.5 × (1 − 0.5) / 0.05²
 n = min(N, ceiling(n0 / (1 + (n0 − 1) / N)))
 ```
 
-Os estratos e as unidades são ordenados antes do sorteio. A semente é 20260920
-mais o índice do estrato, começando em 1. A amostragem é sem reposição. Uma
-discussão pode participar de várias leis, mas `coding.csv` reúne cada unidade
-uma única vez para cada um dos dois avaliadores configurados.
-
-Preencha `relevance` com `0`, `1` ou vazio; `categories` recebe IDs como
-`C01;C02`, sem duplicações. As definições e exemplos estão em `taxonomy.csv`.
-Os IDs são locais e estáveis para a versão do codebook preservada. Faça a
-avaliação independente em uma cópia da planilha, preservando o template.
-
-```bash
-Rscript main.R --mode analyze --coding inputs/final/coding-reviewed.csv
-```
-
-Esse comando valida identidade, versão, relevância, categorias e duplicações,
-e calcula kappa de **relevância binária** sobre pares preenchidos pelos dois
-avaliadores. Sem respostas pareadas ou quando a concordância esperada é 1,
-o resultado é indefinido. A avaliação humana não é realizada pelo programa;
-sem um arquivo preenchido, o manifesto indica avaliação pendente.
-
-## Instrumento de etapas — RQ3
-
-O [codebook e as instruções](inputs/reference/rq3-codebook.md) definem
-`ml-stages-1.0.0`. Os nove IDs `S01`–`S09` constituem um eixo multilabel
-separado de `C01`–`C24`, inspirado em
-[Amershi et al. (2019)](https://www.microsoft.com/en-us/research/publication/software-engineering-for-machine-learning-a-case-study/).
-Definições operacionais, exemplos regulatórios e adaptações para LLM são
-nossas. O instrumento está preparado; piloto e validação humana ainda
-precisam ocorrer. O instrumento RQ3 tem versão e hash próprios, independentes
-da versão do protocolo de coleta.
-
-`--analyze` continua exigindo ambas as últimas coletas científicas válidas.
-Além dos arquivos existentes, prepara `development-stages.csv`,
-`coding-sources.csv` e `consensus.csv` em `inputs/final/collection/`.
-`coding.csv` ganha campos de etapas, versão, hash e evidências, inicialmente
-pendentes e sem rótulos ou trechos inventados.
-
-Preserve os templates. Use uma cópia de `coding.csv` para as duas avaliações
-independentes de toda a amostra e uma cópia de `consensus.csv` para registrar
-o consenso depois dessas avaliações:
-
-```bash
-Rscript main.R --analyze --coding inputs/final/coding-reviewed.csv
-Rscript main.R --analyze --coding inputs/final/coding-reviewed.csv --consensus inputs/final/consensus-reviewed.csv
-```
-
-A importação exige identidade, versão/hash, estado, cobertura e evidência
-literal em artefato da mesma discussão. Aceita múltiplas etapas justificadas.
-`pending`, `identified`, `indeterminate` e `not_applicable` distinguem
-avaliação incompleta, etapas identificadas, indeterminação após avaliação
-e discussão não relevante. Indeterminação exige justificativa e não admite
-etapas identificadas simultaneamente.
-
-Planilhas antigas sem etapas continuam aceitas para relevância e categorias;
-a RQ3 fica pendente. Os arquivos fornecidos não são modificados: seus bytes
-são preservados em `independent-input.csv` e `consensus-input.csv` na
-exportação, arquivada em uma nova análise. O consenso não substitui nem
-entra no cálculo das decisões independentes.
-
-`initial_text`, `comment_context`, `rq1_context_status` e
-`coding-sources.csv` distinguem a fonte para RQ1 sem alterar os bancos.
-No HF, o primeiro comentário só entra no texto inicial quando tipo, autoria
-e data sustentam essa identificação. Caso contrário, `unresolved_context`
-sinaliza a necessidade de revisão. Comentários automatizados de discussões
-humanas continuam disponíveis.
-
-Os resultados ficam em `outputs/tables/rq3/`:
-
-| Arquivo | Conteúdo |
-|---|---|
-| `stages.csv` | Contagens, proporções e denominadores por etapa e hub; indeterminadas, pendências e não relevantes separados |
-| `agreement.csv` | Acordo bruto e Cohen's kappa por etapa, geral e por hub, com pares e razões de indefinição |
-| `stage-categories.csv` | Relações entre etapas e categorias originais, com unidade, projeto e URL |
-| `examples.csv` | Trechos, artefatos, papel da fonte, avaliador e versão do consenso |
-| `contrasts.csv` | Nove contrastes, H0/H1, diferença descritiva e motivo para não realizar inferência |
-
-As proporções descrevem a amostra manual única, sem pesos ou extrapolação
-para a população. O denominador contém relevantes com etapa avaliada,
-incluindo indeterminadas; avaliações pendentes são informadas separadamente.
-Uma discussão pode entrar em várias etapas, e a soma pode superar 100%.
-Denominador zero produz proporção indefinida, não uma coleta inválida.
-
-Kappa por etapa usa pares em que ambos julgaram a discussão relevante e
-identificaram etapas. Indeterminadas e não relevantes não viram negativos
-artificiais. Pares ausentes e acordo esperado igual a um são explicitamente
-indefinidos. A cobertura dos dois avaliadores é exigida no arquivo; linhas
-incompletas devem permanecer como pendentes.
-
-Para cada etapa, H0 é igualdade da proporção entre hubs e H1 é diferença.
-Inferência exige projetos comparáveis, vínculos entre hubs, agrupamento por
-projeto, efeitos, intervalos e ajuste de Holm na família de nove contrastes.
-Esses metadados e o desenho não estão estabelecidos no corpus atual: o software
-registra `not_testable` e não aplica testes sobre contagens multilabel.
-Detalhes estão no codebook. Zero relevantes no HF é um resultado descritivo
-válido. Diferenças não medem conformidade ou maior preocupação jurídica.
-
-O site continua com uma página. Exibe RQ3 pendente sem anotações importadas,
-rotula resultados parciais como provisórios e verifica versão e integridade
-antes de apresentar agregados. Os trechos individuais não vão para a página.
+Os estratos e unidades são ordenados antes do sorteio. A semente é 20260920
+mais o índice do estrato, começando em 1. A amostragem é sem reposição. Os
+arquivos preparados são gravados em `inputs/final/collection/`.
 
 ## Comunicação e limites do piloto
 
