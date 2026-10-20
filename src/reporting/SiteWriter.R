@@ -149,7 +149,15 @@ SiteWriter <- R6::R6Class("SiteWriter",
       value
     },
     references = function() {
-      path <- private$config$path("inputs/reference/literature_methods.md")
-      paste(readLines(path, warn = FALSE), collapse = "\n")
+      path <- private$config$path("README.md")
+      lines <- readLines(path, warn = FALSE)
+      heading <- which(trimws(lines) == "## Referências")
+      if (length(heading) != 1L) stop("Seção de referências ausente ou duplicada no README", call. = FALSE)
+      body <- if (heading < length(lines)) lines[(heading + 1L):length(lines)] else character()
+      next_heading <- grep("^## ", body)
+      if (length(next_heading)) body <- body[seq_len(next_heading[[1L]] - 1L)]
+      body <- body[nzchar(trimws(body))]
+      if (!length(body)) stop("Lista de referências vazia no README", call. = FALSE)
+      paste(body, collapse = "\n")
     }
   ), lock_objects = TRUE, lock_class = TRUE, cloneable = FALSE)

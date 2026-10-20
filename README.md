@@ -147,5 +147,12 @@ Renderizar localmente não cria commits nem publica o projeto.
 
 ## Referências
 
-As referências científicas usadas pelo projeto estão em
-[`inputs/reference/literature_methods.md`](inputs/reference/literature_methods.md).
+- Amershi, S. et al. (2019). *Software Engineering for Machine Learning: A Case Study*. ICSE-SEIP, pp. 291–300. [DOI: 10.1109/ICSE-SEIP.2019.00042](https://doi.org/10.1109/ICSE-SEIP.2019.00042).
+- Cohen, J. (1960). *A Coefficient of Agreement for Nominal Scales*. Educational and Psychological Measurement. [DOI: 10.1177/001316446002000104](https://doi.org/10.1177/001316446002000104).
+- Cochran, W. G. (1977). *Sampling Techniques* (3ª ed.). Wiley.
+- Gebru, T. et al. (2021). *Datasheets for Datasets*. [DOI: 10.1145/3458723](https://doi.org/10.1145/3458723).
+- Herwanto, H. et al. (2024). *Toward a Holistic Privacy Requirements Engineering Process: Insights From a Systematic Literature Review*. IEEE Access. [DOI: 10.1109/ACCESS.2024.3380888](https://doi.org/10.1109/ACCESS.2024.3380888).
+- Kapitsaki, G. (2026). *Regulatory compliance-readiness in the AI Supply Chain: examining datasets in Hugging Face*. [arXiv:2607.03310](https://arxiv.org/abs/2607.03310).
+- Kapitsaki, G. M.; Papoutsoglou, M.; Treude, C.; Theophilou, I. (2026). *Analyzing developer discussions on EU and US privacy legislation compliance in GitHub repositories*. Information and Software Technology. [DOI: 10.1016/j.infsof.2026.108252](https://doi.org/10.1016/j.infsof.2026.108252). [Pacote de replicação](https://github.com/gkapi/github-privacy-law-issues-analysis).
+- Kosenkov, A. et al. (2026). *Privacy by design: Aligning GDPR and software engineering specifications with a requirements engineering approach*. Information and Software Technology. [DOI: 10.1016/j.infsof.2025.107946](https://doi.org/10.1016/j.infsof.2025.107946).
+- Mitchell, M. et al. (2019). *Model Cards for Model Reporting*. [DOI: 10.1145/3287560.3287596](https://doi.org/10.1145/3287560.3287596).

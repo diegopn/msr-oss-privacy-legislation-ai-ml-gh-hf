@@ -8,7 +8,6 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       private$instrument()
       private$annotations()
       private$statistics()
-      private$source_roles()
       private$integration()
     }
   ),
@@ -152,30 +151,6 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       empty <- analysis$run(rows[FALSE, ], consensus[FALSE, ])
       testthat::expect_true(all(is.na(empty$tables$stages$proportion)))
     }),
-    source_roles = function() testthat::test_that("texto inicial HF exige autoria e data, preservando comentários e eventos de contexto", {
-      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
-      fixture$store$start("huggingface")
-      fixture$store$repository(list(key = "repo", platform = "huggingface", type = "model", id = "org/test",
-        status = "eligible", reason = "test", ai = list(signals = list())))
-      created <- "2022-01-01T00:00:00Z"
-      main <- list(key = "unit", unit_key = "unit", repo_key = "repo", platform = "huggingface",
-        kind = "discussion", created = created, text = "Title", url = "url", metadata = list(author = "person"))
-      fixture$store$artifact(main)
-      events <- list(
-        list(key = "e0", type = "title-change", author = "person", date = created, text = "Old title"),
-        list(key = "e1", type = "comment", author = "person", date = created, text = "Initial body"),
-        list(key = "e2", type = "comment", author = "bot", date = "2022-01-02T00:00:00Z", text = "Automated context"))
-      for (event in events) {
-        artifact <- main; artifact$key <- event$key; artifact$kind <- "event"
-        artifact$created <- event$date; artifact$text <- event$text
-        artifact$metadata <- list(type = event$type, author = event$author)
-        fixture$store$artifact(artifact)
-      }
-      sources <- PopulationBuilder$new(fixture$store)$sources("unit")
-      testthat::expect_identical(sources$source_role[match(c("unit", "e0", "e1", "e2"), sources$artifact_key)],
-        c("initial_title", "event_context", "initial", "comment_context"))
-      testthat::expect_true("Automated context" %in% sources$text)
-    }),
     integration = function() testthat::test_that("análise preserva decisões independentes e consenso, sem substituir planilhas", {
       fixture <- private$setup(); on.exit(fixture$cleanup(), add = TRUE)
       exporter <- AnalysisExporter$new(fixture$config, fixture$store)
@@ -209,14 +184,14 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       testthat::expect_true(all(c("initial", "comment_context", "unresolved_context") %in% sources$source_role))
       testthat::expect_true(any(sources$kind == "comment" & grepl("CCPA CPRA", sources$text, fixed = TRUE)))
       file.copy(private$config$path("site"), fixture$config$root, recursive = TRUE)
-      dir.create(fixture$config$path("inputs/reference"), recursive = TRUE)
-      file.copy(private$config$path("inputs/reference/literature_methods.md"), fixture$config$path("inputs/reference/literature_methods.md"))
+      file.copy(private$config$path("README.md"), fixture$config$root)
       dir.create(dirname(fixture$config$path(fixture$config$settings$paths$database)), recursive = TRUE, showWarnings = FALSE)
       file.copy(fixture$store$path, fixture$config$path(fixture$config$settings$paths$database))
       SiteDataSource$new(fixture$config)$lock_official(fixture$config$path(fixture$config$settings$paths$database), complete_run = TRUE)
       SiteWriter$new(fixture$config)$prepare()
       page <- paste(readLines(fixture$config$path("index.qmd")), collapse = "\n")
       testthat::expect_match(page, "RQ3")
+      testthat::expect_match(page, "Datasheets for Datasets")
       testthat::expect_false(grepl("## Etapas do desenvolvimento", page, fixed = TRUE))
       testthat::expect_false(grepl("Requisitos do modelo", page, fixed = TRUE))
       testthat::expect_false(grepl("avaliação humana|human evaluation|RQ3 pendente", page, ignore.case = TRUE))

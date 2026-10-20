@@ -12,6 +12,8 @@ TestRunner <- R6::R6Class("TestRunner",
       testthat::with_reporter(reporter, {
         reporter$start_file("contracts")
         private$environment$ProtocolContractTests$new(private$config, private$environment)$run()
+        private$environment$RQ1ContractTests$new(private$config)$run()
+        private$environment$RQ2ContractTests$new(private$config)$run()
         private$environment$RQ3ContractTests$new(private$config)$run()
         reporter$end_file()
       })

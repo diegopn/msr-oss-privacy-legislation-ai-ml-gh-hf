@@ -11,7 +11,6 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$time()
       private$license()
       private$ai()
-      private$text()
       private$http()
       private$pagination()
       private$hf_throttle()
@@ -38,7 +37,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$storage()
       private$pilot_retention()
       private$sampling()
-      private$coding()
+      private$agreement()
       private$analysis()
       private$pipeline()
       private$application()
@@ -134,23 +133,6 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(policy$bot(list(type = "Bot", login = "person")))
       testthat::expect_true(policy$bot(list(type = "User", login = "build-bot")))
       testthat::expect_false(policy$bot(list(type = "User", login = "robotics")))
-    }),
-    text = function() testthat::test_that("leis são literais e conceitos respeitam limites e origem", {
-      matcher <- TextMatcher$new(private$config)
-      artifact <- list(key = "a", unit_key = "u", created = "2022-01-01", text = "xgDpRy General Data Protection Regulation CCPA CPRA consent consented cookie cookies")
-      evidence <- matcher$find(artifact, "2019-01-01")
-      laws <- vapply(Filter(function(e) e$kind == "legal", evidence), `[[`, "", "label")
-      testthat::expect_equal(sum(laws == "GDPR"), 2L)
-      testthat::expect_true("CCPA" %in% laws)
-      testthat::expect_false("CPRA" %in% laws)
-      concepts <- Filter(function(e) e$kind == "concept", evidence)
-      testthat::expect_true(any(vapply(concepts, function(e) e$term == "consent", logical(1))))
-      testthat::expect_equal(sum(vapply(concepts, function(e) e$term == "consent", logical(1))), 1L)
-      testthat::expect_true(all(vapply(evidence, function(e) nzchar(e$source) && nzchar(e$rule_version), logical(1))))
-      artifact$created <- "2026-09-23"
-      testthat::expect_length(matcher$find(artifact, "2022-01-01"), 0L)
-      artifact$created <- "2022-01-01"
-      testthat::expect_false(any(vapply(matcher$find(artifact, ""), function(e) e$kind == "legal", logical(1))))
     }),
     http = function() {
       private$http_retries()
@@ -1077,7 +1059,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(source$update_pilot(pilot))
       testthat::expect_identical(source$select()$source, "pilot")
       dir.create(fixture$config$path("inputs"), recursive = TRUE)
-      file.copy(private$config$path("inputs/reference"), fixture$config$path("inputs"), recursive = TRUE)
+      file.copy(private$config$path("README.md"), fixture$config$root)
       file.copy(private$config$path("site/index-template.md"), fixture$config$path("site"), overwrite = TRUE)
       site_state <- SiteWriter$new(fixture$config)$prepare()
       testthat::expect_identical(site_state$repositories_with_evidence, "2")
@@ -1085,6 +1067,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_false(grepl("github_limit", site_state$provenance, fixed = TRUE))
       rendered_source <- paste(readLines(fixture$config$path("index.qmd"), warn = FALSE), collapse = "\n")
       testthat::expect_match(rendered_source, "Repositórios com menções a leis")
+      testthat::expect_match(rendered_source, "Privacy by design: Aligning GDPR")
       testthat::expect_false(grepl("Discussões únicas com evidência legal", rendered_source, fixed = TRUE))
       summary_text <- paste(readLines(fixture$config$path("site/summary.json"), warn = FALSE), collapse = "\n")
       testthat::expect_false(grepl("legal_discussions|models|datasets", summary_text, perl = TRUE))
@@ -1165,18 +1148,9 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_equal(first$strata$seed, c(20260921, 20260922))
       testthat::expect_equal(anyDuplicated(first$sample[c("unit_key", "law")]), 0L)
     }),
-    coding = function() testthat::test_that("codificações e kappa tratam duplicação e respostas ausentes", {
+    agreement = function() testthat::test_that("concordância entre avaliadores trata respostas ausentes", {
       rows <- data.frame(unit_key = rep(c("a", "b", "c", "d"), 2), reviewer = rep(c("r1", "r2"), each = 4),
         codebook_version = private$config$taxonomy$version, relevance = c("0", "0", "1", "1", "0", "1", "1", "1"), categories = "")
-      validator <- CodingValidator$new(private$config, c("a", "b", "c", "d"))
-      testthat::expect_silent(validator$validate(rows))
-      testthat::expect_error(validator$validate(rbind(rows, rows[1, ])), "duplicada")
-      invalid <- rows; invalid$relevance[1] <- "2"
-      testthat::expect_error(validator$validate(invalid), "Relevância")
-      invalid <- rows; invalid$categories[1] <- "C01;C01"
-      testthat::expect_error(validator$validate(invalid), "repetida")
-      invalid$categories[1] <- "C99"
-      testthat::expect_error(validator$validate(invalid), "taxonomia")
       calculator <- KappaCalculator$new()
       testthat::expect_equal(calculator$compute(rows, c("r1", "r2"))$kappa, 0.5)
       testthat::expect_error(calculator$compute(rows, c("r1", "r1")), "distintos")
@@ -1449,8 +1423,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       dir.create(file.path(root, "site"))
       file.copy(private$config$path("site/collection-source.json"), file.path(root, "site"))
       writeLines("Coleta: {{REPOSITORIES_WITH_EVIDENCE}}", file.path(root, "site/index-template.md"))
-      dir.create(file.path(root, "inputs/reference"), recursive = TRUE)
-      file.copy(private$config$path("inputs/reference/literature_methods.md"), file.path(root, "inputs/reference"))
+      file.copy(private$config$path("README.md"), root)
       dir.create(file.path(root, "bin"))
       quarto <- file.path(root, "bin/quarto")
       writeLines(c("#!/bin/sh", 'mkdir -p "$2/_site"',
