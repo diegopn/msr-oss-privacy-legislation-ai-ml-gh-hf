@@ -1,7 +1,7 @@
 # Legislação de privacidade em projetos Open Source de IA/ML
 
 Projeto em **R com R6** para identificar menções a GDPR, CCPA, CPRA e Data
-Protection Act em issues do GitHub e Discussions de modelos e datasets do
+Protection Act em issues do GitHub e Discussions dos repositórios do
 Hugging Face. Preserva as respostas da coleta, confirma menções textuais e
 prepara uma amostra estratificada para avaliação humana.
 Integra uma classificação humana independente por etapas de desenvolvimento
@@ -12,8 +12,9 @@ BERT, não realiza a avaliação humana e não implementa todas as análises da
 dissertação. A precisão da identificação de IA/ML e a cobertura da descoberta
 por licença precisam de validação empírica.
 
-Projetos com status `review` ficam no catálogo, fora da população elegível;
-ainda não há importação de decisões humanas nem reprocessamento desses casos.
+Cada repositório recebe uma decisão automática de elegibilidade ou exclusão,
+com o motivo registrado. Evidência insuficiente de IA/ML resulta em exclusão
+documentada; a coleta não cria uma fila de revisão de repositórios.
 Os conceitos são registrados nas unidades principais, comentários e eventos,
 com origem identificável. As exportações separam título/texto inicial do
 contexto dos comentários para RQ1, sinalizando texto inicial HF não comprovado.
@@ -121,7 +122,7 @@ src/
   config/                     configuração e integridade do protocolo
   domain/                     datas, licenças e confirmação textual
   selection/                  elegibilidade e confirmação de IA/ML
-  storage/                    SQLite, auditoria, lock e promoção de banco
+  storage/                    SQLite, auditoria, lock e fonte persistente do site
   data/                       população e textos para avaliação
   analysis/                   validação, amostragem, concordância e descrição RQ3
   reporting/                  exportação e site
@@ -137,7 +138,7 @@ inputs/
 outputs/                      figuras, tabelas, relatórios e metadados de saída
   tables/rq3/                 frequências, concordância, relações, exemplos e contrastes
   reports/rq3.json            estado da avaliação e integridade dos resultados
-site/                         template, estilos, idioma e tema
+site/                         template, idiomas, tema e estado auditável da fonte
 _site/                        site Quarto gerado localmente, ignorado pelo Git
 tests/                        contratos e transporte simulado
 ```
@@ -187,19 +188,33 @@ tópicos foram mantidos exatamente como enviados pelo usuário. Os vocabulários
 complementares estão explicitados na configuração e precisam de validação no
 contexto da pesquisa.
 
-No Hugging Face, a descoberta percorre cada licença OSI para modelos e datasets,
-com paginação processada por callbacks e deduplicação por tipo e identificador.
-Spaces, recursos privados, desativados e `gated` são excluídos. Metadados são
-complementados por consulta de detalhes e pelo cabeçalho YAML do card. Tarefa,
-pipeline ou biblioteca reconhecida em campos estruturados confirmam IA/ML;
-tags genéricas isoladas não confirmam. Apenas Discussions fechadas são aceitas;
-autores identificados como bots são excluídos. Estado, autoria, data e tipo são
-verificados na listagem e novamente nos detalhes. A identificação de bots usa
-o tipo da conta, os padrões de nome e `eligibility.hf_bot_accounts`, que inclui
-`parquet-converter`. Eventos textuais são tratados individualmente; pull requests
-e commits ficam fora. A indexação de licenças do serviço limita a descoberta.
+No Hugging Face, a descoberta percorre cada licença OSI em modelos, datasets,
+Spaces e Kernels, com paginação processada por callbacks e deduplicação por
+tipo e identificador. Buckets ficam fora da coleta porque não são unidades com
+Discussions. Os campos variam por tipo: Spaces não expõem `gated`; Kernels
+usam metadados próprios e `KernelInfo` não documenta campos como `createdAt`
+ou `disabled`. A documentação oficial sobre [repositórios Kernel](https://huggingface.co/docs/huggingface_hub/en/guides/repository)
+lista métodos de consulta de um Kernel, arquivos e referências, mas não documenta uma listagem geral de Kernels. A
+descoberta implementada usa `/api/kernels` como rota exploratória; sua paginação
+e cobertura precisam ser validadas contra respostas reais antes de uma coleta
+ser considerada integral para esse tipo. O código consulta apenas os campos
+disponíveis para cada tipo e usa o README do repositório quando precisa
+confirmar licença ou finalidade de IA/ML. Tarefa, pipeline ou biblioteca reconhecida em metadados estruturados confirma IA/ML;
+SDK de interface ou tags genéricas isoladas não confirmam. Issues e Discussions
+seguem o corte temporal; a data de criação do repositório não substitui a data
+do conteúdo. Apenas Discussions fechadas são aceitas; pull requests e autores
+identificados como bots são excluídos. Estado, autoria, data e tipo são
+verificados na listagem e novamente nos detalhes. Comentários de bots em
+discussões elegíveis são preservados. A identificação
+de bots usa o tipo da conta, padrões de nome e `eligibility.hf_bot_accounts`,
+que inclui `parquet-converter`. Eventos textuais são tratados individualmente;
+pull requests e commits ficam fora. A indexação de licenças do serviço limita
+a descoberta. Consulte a [API oficial do Hugging Face](https://huggingface.co/docs/huggingface_hub/en/package_reference/hf_api)
+e o [guia oficial de Discussions](https://huggingface.co/docs/huggingface_hub/en/guides/community).
 
-O protocolo é `1.1.0`, distinguindo essas regras das coletas anteriores. Os dados
+O protocolo é `1.3.0`, registrando a inclusão de Kernels, a decisão automática
+sem fila de revisão de repositórios e distinguindo estas
+regras das coletas anteriores. Os dados
 do piloto já existente continuam com o protocolo usado em sua execução; testes
 offline não substituem nem reclassificam esse banco.
 
@@ -209,7 +224,7 @@ posteriores ao corte; o programa não reconstrói integralmente o estado histór
 ## Auditoria e resultados
 
 - `inputs/data/research.sqlite`: banco científico publicado após sucesso.
-- `inputs/data/archive/`: versões anteriores dos bancos científicos.
+- `inputs/data/archive/`: versões anteriores dos bancos científicos e snapshot fixo da fonte do site.
 - `inputs/data/latest-collections.json`: última tentativa de cada plataforma científica.
 - `inputs/data/pilot/pilot.sqlite` e `summary.json`: banco e contagens do último piloto.
 - `inputs/raw/<execução>/<sha256>.body`: bytes das respostas científicas e integridade.
@@ -217,6 +232,8 @@ posteriores ao corte; o programa não reconstrói integralmente o estado histór
 - `inputs/final/collection/`: população, amostra, estratos, codificações, codebook e manifesto.
 - `inputs/final/archive/`: versões anteriores dos arquivos preparados para análise.
 - `_site/`: site estático Quarto gerado localmente.
+- `site/collection-source.json`: fonte atual, registro da transição e histórico auditável.
+- `site/pilot-summary.json`: procedência e cobertura do piloto usados no site antes da transição.
 
 Os dados produzidos pela coleta ficam em `inputs`, pois serão a entrada das
 análises posteriores. `outputs/figures`, `outputs/tables` e `outputs/reports`
@@ -231,13 +248,24 @@ O piloto não arquiva bancos e não altera dados científicos, referências ou
 planilhas manuais. As coletas científicas mantêm bancos anteriores e respostas
 brutas por execução; novas exportações preservam os CSV anteriores em `archive/`.
 
+O site usa o piloto existente como prévia preliminar até um `--run` concluir as
+duas plataformas sem limites do piloto e com paginação e cobertura verificadas.
+Nesse momento, `site/collection-source.json` registra a transição permanente e
+um snapshot imutável é guardado em `inputs/data/archive/site-source/`, fora das
+pastas que o piloto limpa. Pilotos posteriores não alteram essa escolha. Toda
+rota de geração, inclusive o pre-render do Quarto e a publicação em CI, falha
+com uma mensagem explícita se o snapshot ou as respostas brutas necessárias
+estiverem indisponíveis; não retorna aos dados do piloto. Para gerar o site a
+partir de um checkout limpo após essa transição, os arquivos apontados pelo
+registro oficial precisam estar disponíveis nesse checkout.
+
 SQLite preserva projetos, artefatos, evidências, execuções, tentativas, respostas,
 problemas e indisponibilidades reconhecidas. Evidências legais, de conceitos e
 de IA/ML registram termos, origem, trechos e versão da regra. As identidades
 distinguem plataforma, tipo e identificador, incluindo comentários e eventos.
-As contagens de ocorrências, discussões e projetos não são intercambiáveis.
-O total GitHub descreve projetos encontrados por discussões legais, sem
-representar todos os projetos de IA/ML da plataforma.
+As contagens de ocorrências, discussões e repositórios não são intercambiáveis.
+O total GitHub descreve repositórios encontrados por buscas de discussões sobre
+legislação, sem representar todos os repositórios de IA/ML da plataforma.
 
 A análise exige as duas últimas tentativas científicas concluídas, sem problemas
 pendentes, com o corte, versão e fingerprint esperados, além da integridade das
@@ -294,8 +322,8 @@ separado de `C01`–`C24`, inspirado em
 [Amershi et al. (2019)](https://www.microsoft.com/en-us/research/publication/software-engineering-for-machine-learning-a-case-study/).
 Definições operacionais, exemplos regulatórios e adaptações para LLM são
 nossas. O instrumento está preparado; piloto e validação humana ainda
-precisam ocorrer. A coleta permanece no protocolo `1.1.0` e no mesmo
-fingerprint; o novo instrumento tem versão e hash próprios.
+precisam ocorrer. O instrumento RQ3 tem versão e hash próprios, independentes
+da versão do protocolo de coleta.
 
 `--analyze` continua exigindo ambas as últimas coletas científicas válidas.
 Além dos arquivos existentes, prepara `development-stages.csv`,
@@ -382,16 +410,17 @@ de renovação são respeitados; fallback cresce de 30 a 300 segundos.
 
 | Limite exclusivo do piloto | Quantidade |
 |---|---:|
-| Resultados GitHub examinados por termo | 100 |
-| Repositórios GitHub validados | 20 |
+| Resultados GitHub examinados por termo | 600 |
+| Repositórios GitHub validados | 600 |
 | Issues de projetos GitHub aceitos processadas | 100 |
 | Comentários por issue | 20 |
-| Repositórios HF descobertos por tipo | 50 |
-| Repositórios HF elegíveis processados por tipo | 10 |
+| Repositórios HF descobertos por tipo | 150 |
+| Repositórios HF elegíveis processados por tipo | 150 |
 | Entradas de discussão examinadas por repositório HF | 20 |
 
-Filtros podem reduzir as quantidades elegíveis. O piloto não estima cobertura,
-tempo ou consumo de cota da coleta completa.
+O limite do piloto do Hugging Face é de até 600 repositórios no total: 150 por
+tipo entre modelos, datasets, Spaces e Kernels. Filtros podem reduzir as quantidades elegíveis. O piloto não estima
+cobertura, tempo ou consumo de cota da coleta completa.
 
 ## Referências
 
@@ -440,6 +469,6 @@ para que funcionem também no GitHub Pages. A origem permanece em `outputs`;
 arquivos sem referência na página não são incluídos automaticamente.
 
 Nenhum comando do projeto cria commits, faz push ou publica automaticamente.
-Em 05/10/2026, um piloto real concluiu as duas plataformas sem problemas
-pendentes. Suas contagens estão em `inputs/data/pilot/summary.json`, arquivo local
-ignorado pelo Git. A população científica completa ainda não foi coletada.
+O resumo do piloto mais recente fica em `inputs/data/pilot/summary.json`, arquivo
+local ignorado pelo Git e substituído no próximo piloto. A população científica
+completa ainda não foi coletada.

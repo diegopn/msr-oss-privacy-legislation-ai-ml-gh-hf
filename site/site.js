@@ -38,6 +38,19 @@
     button.dataset.themePreference = preference;
   }
 
+  function localizedText(element, key) {
+    let value = copy[key];
+    if (!value) return;
+    for (let pass = 0; pass < element.attributes.length; pass += 1) {
+      for (const attribute of element.attributes) {
+        if (!attribute.name.startsWith("data-value-")) continue;
+        const name = attribute.name.slice("data-value-".length);
+        value = value.replaceAll(`{${name}}`, copy[attribute.value] || attribute.value);
+      }
+    }
+    element.textContent = value;
+  }
+
   async function translate(choice) {
     const nextLanguage = languages.includes(choice) ? choice : "pt-BR";
     try {
@@ -48,7 +61,7 @@
       document.documentElement.lang = language;
 
       document.querySelectorAll("[data-i18n]").forEach(element => {
-        if (copy[element.dataset.i18n]) element.textContent = copy[element.dataset.i18n];
+        localizedText(element, element.dataset.i18n);
       });
 
       const summary = await fetch(new URL("site/summary.json", document.baseURI));

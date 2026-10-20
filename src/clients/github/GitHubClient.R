@@ -15,14 +15,14 @@ GitHubClient <- R6::R6Class("GitHubClient",
       response <- private$http$get(url, optional = TRUE)
       if (is.null(response)) {
         private$store$unavailable(identifier, "repository_unavailable")
-        return(private$record(identifier, list(), list(status = "review", evidence = list()), FALSE))
+        return(private$record(identifier, list(), list(status = "excluded", evidence = list()), FALSE))
       }
       metadata <- response$data
       if (!is.list(metadata)) {
         private$store$problem("invalid_repository_response", url, "Metadados do repositório não são um objeto JSON")
-        return(private$record(identifier, list(), list(status = "review", evidence = list()), FALSE))
+        return(private$record(identifier, list(), list(status = "excluded", evidence = list()), FALSE))
       }
-      preliminary <- private$record(identifier, metadata, list(status = "review", evidence = list()), TRUE)
+      preliminary <- private$record(identifier, metadata, list(status = "candidate", evidence = list()), TRUE)
       if (private$policy$assess(preliminary, preliminary$ai)$status == "excluded") return(preliminary)
       files <- private$files(url, metadata)
       ai <- private$ai$github(metadata, files$manifests, files$readme)

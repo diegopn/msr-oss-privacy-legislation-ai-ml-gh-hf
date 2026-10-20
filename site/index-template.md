@@ -3,23 +3,24 @@ title: "Discussões sobre privacidade em OSS de IA/ML"
 subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
 ---
 
-<div class="hero-note"><p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions de modelos e datasets do Hugging Face.</p></div>
+<div class="hero-note"><p data-i18n="intro">Identificação de menções à legislação de privacidade em issues do GitHub e Discussions dos repositórios do Hugging Face.</p></div>
 
 ## Estado do projeto {#visao-geral}
 
 <p id="collection-status" role="status">{{STATUS}}</p>
+<div id="source-provenance">{{PROVENANCE}}</div>
 
 <div class="metric-grid">
-<div class="metric-card"><h3>{{CATALOGUED}}</h3><p data-i18n="catalogued">Projetos catalogados</p></div>
-<div class="metric-card"><h3>{{ELIGIBLE}}</h3><p data-i18n="eligible">Projetos elegíveis</p></div>
-<div class="metric-card"><h3>{{DISCUSSIONS}}</h3><p data-i18n="discussions">Discussões únicas com evidência legal</p></div>
+<div class="metric-card"><h3>{{CATALOGUED}}</h3><p data-i18n="catalogued">Repositórios catalogados</p></div>
+<div class="metric-card"><h3>{{ELIGIBLE}}</h3><p data-i18n="eligible">Repositórios elegíveis</p></div>
+<div class="metric-card"><h3>{{REPOSITORIES_WITH_EVIDENCE}}</h3><p data-i18n="repositories_with_evidence">Repositórios com menções a leis</p></div>
 </div>
 
-<p data-i18n="pending">Um traço indica resultado pendente. Pilotos e testes simulados não compõem os resultados científicos.</p>
+<p data-i18n="pending">Um traço indica resultado pendente. Dados de piloto são prévias limitadas, identificadas como preliminares, e não são resultados científicos.</p>
 
 ## Método {#metodologia}
 
-<p data-i18n="method">A descoberta precede a seleção dos projetos. A confirmação registra ocorrências textuais e sua procedência; as categorias de privacidade são atribuídas pelos avaliadores.</p>
+<p data-i18n="method">A descoberta precede a seleção dos repositórios. A confirmação registra ocorrências textuais e sua procedência; as categorias de privacidade são atribuídas pelos avaliadores.</p>
 
 | Questão | Objeto |
 |---|---|
@@ -40,9 +41,9 @@ subtitle: "GitHub e Hugging Face · coleta auditável e avaliação humana"
 
 <p data-i18n="github">GitHub: busca global de termos legais em issues públicas e fechadas; exclui pull requests e autores de issues identificados como bots. O repositório precisa de um sinal de descoberta de IA/ML e evidência técnica. A coleta lê manifestos na raiz e README quando necessário; não percorre código-fonte ou subdiretórios.</p>
 
-<p data-i18n="hf">Hugging Face: descoberta de modelos e datasets por cada licença OSI; exclui Spaces, projetos privados e acesso gated. Uma tarefa, pipeline ou biblioteca reconhecida em metadados estruturados confirma IA/ML. Apenas Discussions fechadas são aceitas; autores identificados como bots são excluídos.</p>
+<p data-i18n="hf">Hugging Face: descoberta de modelos, datasets, Spaces e Kernels por cada licença OSI; Buckets ficam fora da coleta porque não são unidades com Discussions. Os campos variam por tipo: Spaces não expõem gated, e Kernels têm metadados próprios. A rota de listagem de Kernels usada pelo coletor não está entre os métodos gerais oficialmente documentados; sua paginação e cobertura precisam de validação ao vivo antes de essa parte ser considerada integral. Metadados e README confirmam licença e finalidade IA/ML. Apenas Discussions fechadas são aceitas; pull requests e discussões iniciadas por bots são excluídos. Comentários de bots em discussões elegíveis são preservados.</p>
 
-<p data-i18n="licenses">Ambas as plataformas: licença SPDX reconhecida pela lista OSI local e criação até o corte. Todos os identificadores em expressões de licença precisam ser aprovados. Forks e projetos arquivados são aceitos; não há limiares de popularidade.</p>
+<p data-i18n="licenses">Ambas as plataformas: licença SPDX reconhecida pela lista OSI local. O corte temporal se aplica à criação de Issues e Discussions, não à criação do repositório. Todos os identificadores em expressões de licença precisam ser aprovados. Forks e repositórios arquivados são aceitos; não há limiares de popularidade.</p>
 
 <p data-i18n="concepts">20 conceitos: listas originais e revisadas do pacote científico, com limites de palavra e procedência separada. 24 categorias: codebook humano, sem classificação automática por palavras-chave.</p>
 
@@ -92,7 +93,7 @@ quarto preview
 
 ## Limites {#limites}
 
-<p data-i18n="limits">Menção textual não decide conformidade ou violação legal. O total de projetos GitHub corresponde aos encontrados nas buscas de discussões legais, sem estimar todos os projetos de IA/ML da plataforma. A descoberta no Hugging Face depende da indexação de licenças. O piloto demonstra funcionamento em um recorte limitado; cobertura, tempo e consumo de cota da coleta completa exigem validação.</p>
+<p data-i18n="limits">Menção textual não decide conformidade ou violação legal. O total de repositórios GitHub corresponde aos encontrados nas buscas de discussões sobre legislação, sem estimar todos os repositórios de IA/ML da plataforma. A descoberta no Hugging Face depende da indexação de licenças. O piloto demonstra funcionamento em um recorte limitado; cobertura, tempo e consumo de cota da coleta completa exigem validação.</p>
 
 <p data-i18n="unfinished">BERT, avaliação humana e todas as análises da dissertação não são executados automaticamente. A precisão da seleção de IA/ML e a cobertura das licenças ainda precisam de validação empírica.</p>
 

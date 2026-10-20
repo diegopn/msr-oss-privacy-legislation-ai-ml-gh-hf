@@ -52,7 +52,7 @@ AIClassifier <- R6::R6Class("AIClassifier",
   private = list(
     ai = NULL, tools = NULL, version = NULL,
     result = function(accepted, evidence, signals) {
-      list(status = if (accepted) "eligible" else "review", evidence = evidence, signals = signals)
+      list(status = if (accepted) "eligible" else "excluded", evidence = evidence, signals = signals)
     },
     file_signals = function(files, terms, origin, label) {
       result <- list()

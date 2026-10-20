@@ -17,15 +17,13 @@ GitHubCollector <- R6::R6Class("GitHubCollector",
     run = function() {
       private$store$start("github", private$pilot)
       laws <- private$config$settings$protocol$laws
-      total <- if (private$pilot) sum(lengths(lapply(laws, `[[`, "terms"))) else length(laws)
+      total <- sum(lengths(lapply(laws, `[[`, "terms")))
       index <- 0L
       for (law in laws) {
-        searches <- if (private$pilot) law$terms else list(law$terms)
-        for (terms in searches) {
-          term <- if (private$pilot) terms else law$id
+        for (term in law$terms) {
           index <- index + 1L
           private$progress$scope(sprintf("Busca %d/%d: %s", index, total, term), term)
-          received <- private$search$walk(terms, law$start, private$issue,
+          received <- private$search$walk(term, law$start, private$issue,
             private$config$limit("github_results_per_term", private$pilot))
           private$progress$report(paste("Busca", term, "concluída; resultados examinados:", received), counts = FALSE)
         }
@@ -39,7 +37,6 @@ GitHubCollector <- R6::R6Class("GitHubCollector",
     repository = function(item) {
       id <- sub("^https://api.github.com/repos/", "", item$repository_url)
       if (exists(id, private$repos, inherits = FALSE)) return(private$repos[[id]])
-      if (length(ls(private$repos)) >= private$config$limit("github_repositories", private$pilot)) return(NULL)
       repo <- private$client$repository(id)
       decision <- private$policy$assess(repo, repo$ai)
       repo$status <- decision$status

@@ -31,7 +31,7 @@ exportados em `development-stages.csv`. Não são regras automáticas.
 ## Unidade, leitura e independência
 
 Use as mesmas discussões fechadas elegíveis do estudo-base adaptado:
-Issue no GitHub ou Discussion de modelo/dataset no HF, iniciada por autor
+Issue no GitHub ou Discussion de modelo, dataset, Space ou Kernel no HF, iniciada por autor
 não identificado como bot e sem pull request. Leis, direitos/princípios,
 keywords, 24 categorias e filtros de coleta continuam preservados.
 Não atribua etapa pelo hub, licença, popularidade ou tipo de repositório.

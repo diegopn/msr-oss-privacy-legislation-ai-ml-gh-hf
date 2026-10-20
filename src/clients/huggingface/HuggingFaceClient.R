@@ -23,14 +23,14 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       }
       url <- self$api_url(type, id)
       metadata <- if (private$valid_metadata(item)) item else list(id = id)
-      available <- private$complete_metadata(item)
+      available <- private$complete_metadata(item, type)
       if (!available) {
         detail <- private$detail(url)
         available <- !is.null(detail)
         if (available) metadata <- utils::modifyList(metadata, detail$data)
       }
       if (!available) private$store$unavailable(id, "repository_unavailable")
-      card <- if (available && private$readable(metadata) && !private$confirmed(metadata)) private$card(type, id) else list()
+      card <- if (available && private$readable(metadata, type) && !private$confirmed(metadata)) private$card(type, id) else list()
       license <- private$licenses(metadata, card)
       list(key = private$tools$key("huggingface", type, id), platform = "huggingface",
         type = type, id = id, created = private$tools$scalar(metadata$createdAt),
@@ -81,12 +81,27 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
   ),
   private = list(
     http = NULL, config = NULL, store = NULL, tools = NULL, pages = NULL, license = NULL, ai = NULL,
-    complete_metadata = function(metadata) {
+    complete_metadata = function(metadata, type) {
       if (!private$valid_metadata(metadata)) return(FALSE)
-      time <- TimePolicy$new(private$config$settings$protocol$cutoff)
-      flag <- function(value) is.logical(value) && length(value) == 1L && !is.na(value)
-      !is.na(time$parse(metadata$createdAt)) && flag(metadata$private) && flag(metadata$disabled) &&
-        (flag(metadata$gated) || identical(metadata$gated, "auto") || identical(metadata$gated, "manual"))
+      if (type == "space") return(private$space_metadata_complete(metadata))
+      if (type == "kernel") return(private$kernel_metadata_complete(metadata))
+      private$standard_metadata_complete(metadata)
+    },
+    space_metadata_complete = function(metadata) {
+      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled)
+    },
+    kernel_metadata_complete = function(metadata) {
+      private$logical_flag(metadata$private) && private$gate_flag(metadata$gated)
+    },
+    standard_metadata_complete = function(metadata) {
+      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled) &&
+        private$gate_flag(metadata$gated)
+    },
+    logical_flag = function(value) {
+      is.logical(value) && length(value) == 1L && !is.na(value)
+    },
+    gate_flag = function(value) {
+      private$logical_flag(value) || identical(value, "auto") || identical(value, "manual")
     },
     valid_metadata = function(metadata) {
       is.list(metadata) && (is.null(metadata$cardData) || is.list(metadata$cardData))
@@ -113,19 +128,23 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       data$start <= previous || (!length(data$discussions) && data$start < data$count)
     },
     discovery_url = function(type, license) {
-      properties <- c("createdAt", "private", "gated", "disabled", "cardData", "tags")
-      if (type == "model") properties <- c(properties, "pipeline_tag", "library_name")
-      paste0("https://huggingface.co/api/", type, "s?filter=license:",
-        utils::URLencode(license, reserved = TRUE), "&limit=", private$config$settings$http$page_size,
-        paste0("&expand=", properties, collapse = ""))
+      properties <- switch(type,
+        space = c("createdAt", "private", "disabled", "cardData", "tags", "sdk"),
+        kernel = character(),
+        model = c("createdAt", "private", "gated", "disabled", "cardData", "tags", "pipeline_tag", "library_name"),
+        dataset = c("createdAt", "private", "gated", "disabled", "cardData", "tags"))
+      url <- paste0("https://huggingface.co/api/", type, "s?filter=license:",
+        utils::URLencode(license, reserved = TRUE), "&limit=", private$config$settings$http$page_size)
+      if (length(properties)) url <- paste0(url, paste0("&expand=", properties, collapse = ""))
+      url
     },
-    readable = function(metadata) {
-      time <- TimePolicy$new(private$config$settings$protocol$cutoff)
-      identical(metadata$private, FALSE) && identical(metadata$gated, FALSE) &&
-        !isTRUE(metadata$disabled) && time$eligible(metadata$createdAt)
+    readable = function(metadata, type) {
+      visible <- identical(metadata$private, FALSE) && !isTRUE(metadata$disabled)
+      if (type == "space") return(visible)
+      visible && identical(metadata$gated, FALSE)
     },
     card = function(type, id) {
-      prefix <- if (type == "dataset") "datasets/" else ""
+      prefix <- switch(type, dataset = "datasets/", space = "spaces/", kernel = "kernels/", "")
       url <- paste0("https://huggingface.co/", prefix, id, "/resolve/main/README.md")
       response <- private$http$get(url, "resolvers", optional = TRUE)
       if (is.null(response)) return(list())

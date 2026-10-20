@@ -152,15 +152,26 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       manager$promote()
       succeeded <- TRUE
       private$progress$event(paste(if (pilot) "Banco do piloto:" else "Banco científico:", manager$target))
+      if (complete) private$record_site_source(manager$target)
       if (!pilot) private$site()
       invisible(manager$target)
     },
+    record_site_source = function(database_path) {
+      transition <- SiteDataSource$new(private$config)$lock_official(database_path, complete_run = TRUE)
+      if (isTRUE(transition$locked)) return(invisible(transition))
+      retained <- if (identical(transition$source, "official"))
+        "O último snapshot oficial válido será mantido." else "O resumo preliminar do piloto será mantido."
+      private$progress$event(paste("Fonte do site mantida:", transition$reason, retained))
+      invisible(transition)
+    },
     pilot_report = function(store) {
       path <- file.path(dirname(private$config$path(private$config$settings$paths$pilot_database)), "summary.json")
+      source <- SiteDataSource$new(private$config)
       summary <- list(scope = "limited_pilot_not_scientific_population",
         limits = private$config$settings$pilot, counts = store$counts(),
         runs = store$query("SELECT * FROM runs ORDER BY rowid"))
       writeLines(ProtocolTools$new()$json(summary), path)
+      if (source$update_pilot(source$pilot_summary(store))) private$progress$event("Resumo preliminar do site atualizado com o piloto atual.")
       private$progress$event(paste("Resumo do piloto:", path))
     },
     platform = function(platform, store, pilot) {
@@ -198,8 +209,8 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       requests <- store$query("SELECT COUNT(*) n FROM responses WHERE run_id=? AND attempt>0", list(run_id))$n
       reused <- store$query("SELECT COUNT(*) n FROM responses WHERE run_id=? AND attempt=0", list(run_id))$n
       paste0("Acumulado da plataforma: repositórios avaliados: ", total(counts$catalogued),
-        " | elegíveis: ", total(counts$eligible), " | ", if (platform == "github") "issues" else "Discussions",
-        " com menções: ", total(counts$legal_discussions), " | requisições: ", requests,
+        " | elegíveis: ", total(counts$eligible), " | repositórios com menções a leis: ",
+        total(counts$repositories_with_evidence), " | requisições: ", requests,
         if (reused > 0L) paste0(" | respostas reaproveitadas: ", reused) else "",
         " | diagnósticos registrados: ", problems$pending + problems$gaps)
     },

@@ -11,6 +11,25 @@ AnalysisGate <- R6::R6Class("AnalysisGate",
       integrity <- private$store$query("PRAGMA integrity_check")[[1L]]
       if (!identical(integrity, "ok")) stop("Banco com falha de integridade")
       invisible(TRUE)
+    },
+    verify_recorded_runs = function(run_ids) {
+      private$config$require_references()
+      if (!is.list(run_ids) || !all(c("github", "huggingface") %in% names(run_ids))) {
+        stop("Registro da fonte oficial sem identificadores das duas plataformas.", call. = FALSE)
+      }
+      for (platform in c("github", "huggingface")) {
+        run_id <- as.character(run_ids[[platform]])
+        runs <- private$store$query("SELECT * FROM runs WHERE run_id=? AND platform=? AND pilot=0",
+          list(run_id, platform))
+        if (nrow(runs) != 1L) stop("Snapshot oficial sem execução integral registrada: ", platform, call. = FALSE)
+        private$verify_protocol(runs, platform)
+        private$verify_responses(run_id)
+        unresolved <- private$store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND resolved=0", list(run_id))$n[[1L]]
+        if (unresolved > 0L) stop("Snapshot oficial contém lacunas de cobertura não verificadas: ", platform, call. = FALSE)
+      }
+      integrity <- private$store$query("PRAGMA integrity_check")[[1L]]
+      if (!identical(integrity, "ok")) stop("Snapshot oficial com falha de integridade", call. = FALSE)
+      invisible(TRUE)
     }
   ),
   private = list(

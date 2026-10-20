@@ -1,17 +1,20 @@
 AuditStore <- R6::R6Class("AuditStore",
   public = list(
     connection = NULL, run_id = NULL, path = NULL,
-    initialize = function(path, config, recover = FALSE) {
+    initialize = function(path, config, recover = FALSE, readonly = FALSE) {
       self$path <- path
       private$config <- config
       private$tools <- ProtocolTools$new()
       private$recover <- recover
+      private$readonly <- readonly
       private$cache <- new.env(parent = emptyenv())
-      dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-      self$connection <- DBI::dbConnect(RSQLite::SQLite(), path)
+      if (!readonly) dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+      flags <- if (readonly) RSQLite::SQLITE_RO else RSQLite::SQLITE_RW
+      if (!readonly && !file.exists(path)) flags <- RSQLite::SQLITE_RWC
+      self$connection <- DBI::dbConnect(RSQLite::SQLite(), path, flags = flags)
       DBI::dbExecute(self$connection, "PRAGMA foreign_keys = ON")
       DBI::dbExecute(self$connection, "PRAGMA busy_timeout = 5000")
-      private$schema()
+      if (!readonly) private$schema()
     },
     close = function() {
       if (DBI::dbIsValid(self$connection)) DBI::dbDisconnect(self$connection)
@@ -127,6 +130,10 @@ AuditStore <- R6::R6Class("AuditStore",
       list(catalogued = self$query("SELECT platform,repo_type,COUNT(*) n FROM repositories GROUP BY platform,repo_type"),
         eligible = self$query("SELECT platform,repo_type,COUNT(*) n FROM repositories WHERE status='eligible' GROUP BY platform,repo_type"),
         artifacts = self$query("SELECT platform,kind,COUNT(*) n FROM artifacts GROUP BY platform,kind"),
+        repositories_with_evidence = self$query(paste(
+          "SELECT r.platform,r.repo_type,COUNT(DISTINCT r.repo_key) n FROM evidences e",
+          "JOIN artifacts a ON a.artifact_key=e.unit_key JOIN repositories r ON r.repo_key=a.repo_key",
+          "WHERE e.kind='legal' AND r.status='eligible' GROUP BY r.platform,r.repo_type")),
         legal_discussions = self$query(paste(
           "SELECT e.platform,r.repo_type,COUNT(DISTINCT e.unit_key) n FROM evidences e",
           "JOIN artifacts a ON a.artifact_key=e.unit_key JOIN repositories r ON r.repo_key=a.repo_key",
@@ -134,7 +141,7 @@ AuditStore <- R6::R6Class("AuditStore",
     }
   ),
   private = list(
-    config = NULL, tools = NULL, pilot = FALSE, recover = FALSE, cache = NULL,
+    config = NULL, tools = NULL, pilot = FALSE, recover = FALSE, readonly = FALSE, cache = NULL,
     recover_responses = function(platform) {
       private$cache <- new.env(parent = emptyenv())
       if (!private$recover || private$pilot) return(invisible(NULL))

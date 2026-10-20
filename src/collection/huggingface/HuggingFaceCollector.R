@@ -14,7 +14,7 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
     },
     run = function() {
       private$store$start("huggingface", private$pilot)
-      for (type in c("model", "dataset")) private$collect_type(type)
+      for (type in c("model", "dataset", "space", "kernel")) private$collect_type(type)
       private$store$finish()
     }
   ),
@@ -24,7 +24,7 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
     collect_type = function(type) {
       progress <- list(seen = new.env(parent = emptyenv()), discovered = 0L, processed = 0L)
       maximum <- private$config$limit("hf_discovered_per_type", private$pilot)
-      label <- if (type == "model") "modelos" else "datasets"
+      label <- c(model = "modelos", dataset = "datasets", space = "Spaces", kernel = "Kernels")[[type]]
       private$progress$scope(paste("Tipo:", label), label, timer = "Tipo")
       for (license in private$config$osi$licenses) {
         if (progress$discovered >= maximum) break
@@ -87,7 +87,7 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
     discussion = function(repo, item) {
       if (!private$time$eligible(item$createdAt)) return(invisible(NULL))
       key <- private$tools$key("huggingface", "discussion", paste(repo$type, repo$id, item$num, sep = ":"))
-      prefix <- if (repo$type == "dataset") "datasets/" else ""
+      prefix <- switch(repo$type, dataset = "datasets/", space = "spaces/", kernel = "kernels/", "")
       url <- paste0("https://huggingface.co/", prefix, repo$id, "/discussions/", item$num)
       main <- list(key = key, unit_key = key, repo_key = repo$key, platform = "huggingface",
         kind = "discussion", created = item$createdAt, text = private$tools$scalar(item$title),

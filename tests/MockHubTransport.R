@@ -45,7 +45,15 @@ MockHubTransport <- R6::R6Class("MockHubTransport",
         pull_request = if (index == 3L) list(url = "pr") else NULL)
     },
     hf = function(url) {
-      if (grepl("?filter=", url, fixed = TRUE)) return(private$factory$response(list(list(id = "org/demo"))))
+      if (grepl("?filter=", url, fixed = TRUE)) {
+        id <- if (grepl("/api/spaces?", url, fixed = TRUE)) "org/space-demo" else if (
+          grepl("/api/kernels?", url, fixed = TRUE)) "org/kernel-demo" else "org/demo"
+        return(private$factory$response(list(list(id = id))))
+      }
+      if (grepl("/spaces/org/space-demo/resolve/main/README.md", url, fixed = TRUE)) return(private$factory$response(text =
+        "---\nlicense: mit\ntask_categories: [text-classification]\n---\nGDPR in a Space card is not a discussion."))
+      if (grepl("/kernels/org/kernel-demo/resolve/main/README.md", url, fixed = TRUE)) return(private$factory$response(text =
+        "---\nlicense: mit\ntask_categories: [text-classification]\nlibrary_name: pytorch\n---\nGDPR in a Kernel card is not a discussion."))
       if (grepl("/resolve/main/README.md", url, fixed = TRUE)) return(private$factory$response(text =
         "---\nlicense: mit\ntask_categories: [text-classification]\n---\nGDPR in card is not a discussion."))
       if (grepl("/discussions?p=", url, fixed = TRUE)) return(private$factory$response(list(start = 0L, count = 3L,
@@ -57,6 +65,12 @@ MockHubTransport <- R6::R6Class("MockHubTransport",
         events = list(list(id = "event1", createdAt = "2022-01-02T00:00:00Z", type = "comment", data = list(latest = list(raw = "GDPR CCPA CPRA Data Protection Act consent"))),
           list(id = "event2", createdAt = "2026-09-23T00:00:00Z", data = list(content = "GDPR")),
           list(id = "event3", data = list(content = "GDPR"))))))
+      if (grepl("/api/spaces/org/space-demo$", url)) return(private$factory$response(list(
+        id = "org/space-demo", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
+        disabled = FALSE, sdk = "gradio", tags = list("license:mit"), cardData = list(license = "mit"))))
+      if (grepl("/api/kernels/org/kernel-demo$", url)) return(private$factory$response(list(
+        id = "org/kernel-demo", private = FALSE, gated = FALSE, lastModified = "2021-01-01T00:00:00Z",
+        tags = list("license:mit"), cardData = list(license = "mit", library_name = "pytorch"))))
       private$factory$response(list(id = "org/demo", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
         gated = FALSE, disabled = FALSE, pipeline_tag = "text-generation", library_name = "transformers",
         cardData = list(license = "mit")))

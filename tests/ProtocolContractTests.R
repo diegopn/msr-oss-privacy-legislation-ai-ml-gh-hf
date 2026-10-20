@@ -22,12 +22,16 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$search_invalid_pages()
       private$acquisition_gaps()
       private$collectors()
+      private$site_repository_metrics()
       private$collection_optimization()
       private$collection_recovery()
       private$hf_recovery()
       private$github_cutoff()
       private$hf_filters()
+      private$hf_spaces()
+      private$hf_kernels()
       private$pilot_limits()
+      private$site_source()
       private$unavailability()
       private$storage()
       private$pilot_retention()
@@ -53,7 +57,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_silent(c$require_references())
       testthat::expect_equal(c$limit("github_comments", TRUE), 20L)
       testthat::expect_equal(c$limit("github_comments", FALSE), Inf)
-      testthat::expect_equal(unlist(c$settings$pilot, use.names = FALSE), c(100, 20, 100, 20, 50, 10, 20))
+      testthat::expect_equal(unlist(c$settings$pilot, use.names = FALSE), c(1000, 100, 20, 1000, 1000, 20))
       source <- jsonlite::fromJSON(c$path("inputs/reference/replication/manifest.json"))
       for (i in seq_len(nrow(source$files))) {
         testthat::expect_identical(digest::digest(file = c$path(source$files$local[i]), algo = "sha256", serialize = FALSE), source$files$sha256[i])
@@ -81,19 +85,22 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
     ai = function() testthat::test_that("IA exige descoberta e prova técnica no GitHub e estrutura no Hub", {
       classifier <- AIClassifier$new(private$config)
       metadata <- list(name = "demo", topics = list("machine-learning"))
-      testthat::expect_identical(classifier$github(metadata)$status, "review")
+      testthat::expect_identical(classifier$github(metadata)$status, "excluded")
       testthat::expect_identical(classifier$github(metadata, list("requirements.txt" = "torch>=2"))$status, "eligible")
-      testthat::expect_identical(classifier$github(list(name = "demo"), list("requirements.txt" = "torch"))$status, "review")
-      testthat::expect_identical(classifier$github(metadata, list("requirements.txt" = "array"))$status, "review")
+      testthat::expect_identical(classifier$github(list(name = "demo"), list("requirements.txt" = "torch"))$status, "excluded")
+      testthat::expect_identical(classifier$github(metadata, list("requirements.txt" = "array"))$status, "excluded")
       testthat::expect_identical(classifier$github(metadata, code = list("model.py" = "fit(x); predict(x)"))$status, "eligible")
-      testthat::expect_identical(classifier$github(metadata, code = list("model.py" = "fit(x)"))$status, "review")
-      testthat::expect_identical(classifier$huggingface(list(tags = list("machine-learning", "transformers")))$status, "review")
-      testthat::expect_identical(classifier$huggingface(list(cardData = list(description = "transformers")))$status, "review")
+      testthat::expect_identical(classifier$github(metadata, code = list("model.py" = "fit(x)"))$status, "excluded")
+      testthat::expect_identical(classifier$huggingface(list(tags = list("machine-learning", "transformers")))$status, "excluded")
+      testthat::expect_identical(classifier$huggingface(list(cardData = list(description = "transformers")))$status, "excluded")
       testthat::expect_identical(classifier$huggingface(list(pipeline_tag = "text-generation"))$status, "eligible")
       testthat::expect_identical(classifier$huggingface(list(), list(task_categories = list("text-classification")))$status, "eligible")
       policy <- EligibilityPolicy$new(private$config)
       repo <- list(platform = "github", private = FALSE, available = TRUE, created = "2020-01-01", license = "MIT", fork = TRUE, archived = TRUE)
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
+      repo_without_date <- repo; repo_without_date$created <- NULL
+      testthat::expect_identical(policy$assess(repo_without_date, list(status = "eligible"))$status, "eligible")
+      testthat::expect_identical(policy$assess(repo, list(status = "excluded"))$reason, "insufficient_ai")
       repo$private <- NULL
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$reason, "visibility_unknown_or_private")
       repo$private <- FALSE; repo$platform <- "huggingface"; repo$gated <- "auto"
@@ -408,7 +415,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_silent(AnalysisGate$new(fixture$config, fixture$store)$verify())
       result <- AnalysisExporter$new(fixture$config, fixture$store)$run()
       testthat::expect_true(file.exists(file.path(result$path, "coding.csv")))
-      testthat::expect_equal(nrow(result$sample), 10L)
+      testthat::expect_equal(nrow(result$sample), 18L)
       testthat::expect_true(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE code='http_failure' AND resolved=0")$n > 0L)
     }),
     collectors = function() testthat::test_that("coletores reais operam sobre respostas simuladas e deduplicam", {
@@ -422,13 +429,32 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       fixture$config$osi$licenses <- Filter(function(x) x$id %in% c("MIT", "Apache-2.0"), fixture$config$osi$licenses)
       hf <- private$factory$http(fixture, "huggingface", mock$perform)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, hf)$run(), "completed")
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 2L)
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 2L)
-      testthat::expect_equal(sum(fixture$store$counts()$legal_discussions$n), 3L)
-      testthat::expect_equal(nrow(PopulationBuilder$new(fixture$store)$build()), 10L)
-      testthat::expect_false(any(grepl("api/spaces", mock$requests)))
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 4L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 4L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 4L)
+      testthat::expect_equal(sum(fixture$store$counts()$legal_discussions$n), 5L)
+      testthat::expect_equal(nrow(PopulationBuilder$new(fixture$store)$build()), 18L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE status='review'")$n, 0L)
+      testthat::expect_true(any(grepl("api/spaces", mock$requests)))
       testthat::expect_false(any(grepl("commits", mock$requests)))
+    }),
+    site_repository_metrics = function() testthat::test_that("contagens exibidas no site deduplicam repositórios com evidência", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      store <- fixture$store
+      store$start("github")
+      store$repository(list(key = "github:repository:org/demo", platform = "github", type = "repository",
+        id = "org/demo", status = "eligible", reason = "eligible", ai = list(signals = list())))
+      for (number in 1:2) {
+        key <- paste0("unit-", number)
+        store$artifact(list(key = key, unit_key = key, repo_key = "github:repository:org/demo",
+          platform = "github", kind = "issue", created = "2022-01-01", text = "GDPR",
+          url = paste0("https://github.com/org/demo/issues/", number), metadata = list()))
+        store$evidence(list(unit_key = key, artifact_key = key, kind = "legal", label = "GDPR",
+          term = "GDPR", vocabulary = "legal-laws"), "github")
+      }
+      counts <- store$counts()
+      testthat::expect_equal(sum(counts$legal_discussions$n), 2L)
+      testthat::expect_equal(sum(counts$repositories_with_evidence$n), 1L)
     }),
     collection_optimization = function() {
       testthat::test_that("GitHub descarta itens inelegíveis antes de consultar seus repositórios", {
@@ -452,11 +478,12 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         testthat::expect_false(any(grepl("/repos/org/(bot|pull|late|open)", requests)))
         testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='issue'")$n, 1L)
         searches <- utils::URLdecode(requests[grepl("/search/issues?", requests, fixed = TRUE)])
-        testthat::expect_length(searches, 4L)
-        testthat::expect_match(searches[[1L]], '("GDPR" OR "General Data Protection Regulation")', fixed = TRUE)
-        testthat::expect_match(searches[[2L]], '("CCPA" OR "California Consumer Privacy Act")', fixed = TRUE)
-        testthat::expect_match(searches[[3L]], '("CPRA" OR "California Privacy Rights Act")', fixed = TRUE)
-        testthat::expect_match(searches[[4L]], '"Data Protection Act"', fixed = TRUE)
+        testthat::expect_length(searches, 7L)
+        terms <- c('"GDPR"', '"General Data Protection Regulation"', '"CCPA"',
+          '"California Consumer Privacy Act"', '"CPRA"', '"California Privacy Rights Act"',
+          '"Data Protection Act"')
+        for (i in seq_along(terms)) testthat::expect_match(searches[[i]], terms[[i]], fixed = TRUE)
+        testthat::expect_false(any(grepl(" OR ", searches, fixed = TRUE)))
         testthat::expect_false(any(grepl("advanced_search=", searches, fixed = TRUE)))
         requests <- character(); fixture$store$clear_platform("github")
         GitHubCollector$new(fixture$config, fixture$store, http, pilot = TRUE)$run()
@@ -692,6 +719,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       requests <- character()
       transport <- function(url, headers, timeout) {
         requests <<- c(requests, url)
+        if (grepl("/api/models?", url, fixed = TRUE) || grepl("/api/datasets?", url, fixed = TRUE) ||
+            grepl("/api/kernels?", url, fixed = TRUE)) {
+          return(private$factory$response(list()))
+        }
         if (grepl("/discussions?p=", url, fixed = TRUE)) return(private$factory$response(list(start = 0L, count = 9L, discussions = items)))
         if (grepl("/discussions/", url, fixed = TRUE)) {
           number <- as.integer(sub(".*/discussions/", "", url))
@@ -706,8 +737,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       }
       http <- private$factory$http(fixture, "huggingface", transport)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, http)$run(), "completed")
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
-      testthat::expect_equal(nrow(PopulationBuilder$new(fixture$store)$build()), 2L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 1L)
+      testthat::expect_equal(nrow(PopulationBuilder$new(fixture$store)$build()), 1L)
       requested <- sort(unique(as.integer(sub(".*/discussions/", "", requests[grepl("/discussions/", requests, fixed = TRUE)]))))
       testthat::expect_identical(requested, c(1L, 6L, 7L))
       policy <- EligibilityPolicy$new(fixture$config)
@@ -715,6 +746,126 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(policy$bot(list(name = "PARQUET-CONVERTER", type = "user"), "huggingface"))
       testthat::expect_false(policy$bot(list(name = "parquet-converter-human", type = "user"), "huggingface"))
       testthat::expect_false(policy$bot(list(name = "robotics", type = "user"), "huggingface"))
+    }),
+    hf_spaces = function() testthat::test_that("Spaces usam metadados próprios, paginação, README, Discussions e comentários de bots", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      fixture$config$osi$licenses <- Filter(function(x) x$id == "MIT", fixture$config$osi$licenses)
+      fixture$store$start("huggingface")
+      requests <- character()
+      transport <- function(url, headers, timeout) {
+        requests <<- c(requests, url)
+        if (grepl("/api/models?", url, fixed = TRUE) || grepl("/api/datasets?", url, fixed = TRUE) ||
+            grepl("/api/kernels?", url, fixed = TRUE)) {
+          return(private$factory$response(list()))
+        }
+        if (grepl("/api/spaces?", url, fixed = TRUE)) {
+          if (grepl("page=2", url, fixed = TRUE)) return(private$factory$response(list(list(id = "org/space-two"))))
+          return(private$factory$response(list(list(id = "org/space-one")), headers = list(link =
+            '<https://huggingface.co/api/spaces?filter=license%3Amit&page=2&expand=createdAt&expand=private&expand=disabled&expand=cardData&expand=tags&expand=sdk>; rel="next"')))
+        }
+        if (grepl("/api/spaces/org/", url, fixed = TRUE) && !grepl("/discussions", url, fixed = TRUE)) {
+          id <- sub(".*/api/spaces/", "", url)
+          return(private$factory$response(list(id = id, createdAt = "2021-01-01T00:00:00Z",
+            private = FALSE, disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())))
+        }
+        if (grepl("/spaces/org/", url, fixed = TRUE) && grepl("/resolve/main/README.md", url, fixed = TRUE)) {
+          return(private$factory$response(text = "---\nlicense: mit\ntask_categories: [text-classification]\n---\nSpace README"))
+        }
+        if (grepl("/api/spaces/org/", url, fixed = TRUE) && grepl("/discussions?p=", url, fixed = TRUE)) return(private$factory$response(list(
+          start = 0L, count = 4L, discussions = list(
+            list(num = 1L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE, status = "closed", author = list(name = "person", type = "user")),
+            list(num = 2L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE, status = "closed", author = list(name = "build-bot", type = "bot")),
+            list(num = 3L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = TRUE, status = "closed", author = list(name = "person", type = "user")),
+            list(num = 4L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE, status = "open", author = list(name = "person", type = "user"))))))
+        if (grepl("/api/spaces/org/.*/discussions/1$", url)) return(private$factory$response(list(
+          num = 1L, title = "Privacy", createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE,
+          status = "closed", author = list(name = "person", type = "user"),
+          events = list(list(id = "bot-comment", createdAt = "2022-01-02T00:00:00Z", type = "comment",
+            author = list(name = "helper-bot", type = "bot"), data = list(latest = list(raw = "GDPR")))))))
+        stop("Rota Spaces simulada desconhecida: ", url)
+      }
+      http <- private$factory$http(fixture, "huggingface", transport)
+      testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, http)$run(), "completed")
+      repos <- fixture$store$query("SELECT repo_type,status,payload FROM repositories ORDER BY identifier")
+      testthat::expect_identical(repos$repo_type, c("space", "space"))
+      testthat::expect_true(all(repos$status == "eligible"))
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 2L)
+      testthat::expect_true(all(grepl("helper-bot", fixture$store$query("SELECT payload FROM artifacts WHERE kind='event'")$payload, fixed = TRUE)))
+      population <- PopulationBuilder$new(fixture$store)$build()
+      testthat::expect_true(all(population$repo_type == "space"))
+      testthat::expect_true(all(grepl("huggingface.co/spaces/org/space-", population$url, fixed = TRUE)))
+      testthat::expect_equal(sum(grepl("/api/spaces?", requests, fixed = TRUE)), 2L)
+      discovery <- requests[grepl("/api/spaces?", requests, fixed = TRUE)]
+      testthat::expect_true(all(grepl("expand=", discovery, fixed = TRUE)))
+      testthat::expect_true(all(grepl("sdk", discovery, fixed = TRUE)))
+      testthat::expect_false(any(grepl("gated|pipeline_tag|library_name", discovery)))
+      testthat::expect_true(any(grepl("/spaces/org/space-one/resolve/main/README.md", requests, fixed = TRUE)))
+      testthat::expect_true(any(grepl("/spaces/org/space-two/resolve/main/README.md", requests, fixed = TRUE)))
+      testthat::expect_true(any(grepl("/api/spaces/org/space-two$", requests)))
+      discussion_requests <- requests[grepl("/discussions/[234]$", requests)]
+      testthat::expect_length(discussion_requests, 0L)
+      urls <- fixture$store$query("SELECT url FROM artifacts WHERE kind='discussion'")$url
+      testthat::expect_true(all(grepl("huggingface.co/spaces/org/space-", urls, fixed = TRUE)))
+
+      policy <- EligibilityPolicy$new(fixture$config)
+      repo <- list(platform = "huggingface", type = "space", private = FALSE, available = TRUE,
+        created = "2021-01-01T00:00:00Z", license = "MIT", disabled = FALSE)
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
+      testthat::expect_identical(AIClassifier$new(fixture$config)$huggingface(
+        list(sdk = "gradio", tags = list("gradio")))$status, "excluded")
+    }),
+    hf_kernels = function() testthat::test_that("Kernels usam rota, metadados, README, Discussions e URLs próprios", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      fixture$config$osi$licenses <- Filter(function(x) x$id == "MIT", fixture$config$osi$licenses)
+      requests <- character()
+      transport <- function(url, headers, timeout) {
+        requests <<- c(requests, url)
+        if (grepl("/api/models?", url, fixed = TRUE) || grepl("/api/datasets?", url, fixed = TRUE) ||
+            grepl("/api/spaces?", url, fixed = TRUE)) return(private$factory$response(list()))
+        if (grepl("/api/kernels?", url, fixed = TRUE)) {
+          if (grepl("page=2", url, fixed = TRUE)) return(private$factory$response(list(list(id = "org/kernel-two"))))
+          return(private$factory$response(list(list(id = "org/kernel-one")), headers = list(link =
+            '<https://huggingface.co/api/kernels?filter=license%3Amit&page=2>; rel="next"')))
+        }
+        if (grepl("/api/kernels/org/kernel-", url, fixed = TRUE) && !grepl("/discussions", url, fixed = TRUE)) {
+          id <- sub(".*/api/kernels/", "", url)
+          metadata <- list(id = id, private = FALSE, gated = FALSE, lastModified = "2024-01-01T00:00:00Z",
+            tags = list("license:mit"), cardData = list(license = "mit"))
+          if (id == "org/kernel-one") metadata$cardData$library_name <- "pytorch"
+          return(private$factory$response(metadata))
+        }
+        if (grepl("/kernels/org/kernel-two/resolve/main/README.md", url, fixed = TRUE)) {
+          return(private$factory$response(text = "---\nlicense: mit\ntask_categories: [text-generation]\n---\nKernel card"))
+        }
+        if (grepl("/api/kernels/org/kernel-", url, fixed = TRUE) && grepl("/discussions?p=", url, fixed = TRUE)) {
+          return(private$factory$response(list(start = 0L, count = 3L, discussions = list(
+            list(num = 1L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE, status = "closed", author = list(name = "person", type = "user")),
+            list(num = 2L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE, status = "closed", author = list(name = "helper-bot", type = "bot")),
+            list(num = 3L, createdAt = "2022-01-01T00:00:00Z", isPullRequest = TRUE, status = "closed", author = list(name = "person", type = "user"))))))
+        }
+        if (grepl("/api/kernels/org/kernel-one/discussions/1$", url)) return(private$factory$response(list(
+          num = 1L, title = "Privacy", createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE,
+          status = "closed", author = list(name = "person", type = "user"),
+          events = list(list(id = "kernel-bot-comment", createdAt = "2022-01-02T00:00:00Z", type = "comment",
+            author = list(name = "helper-bot", type = "bot"), data = list(latest = list(raw = "GDPR")))))))
+        if (grepl("/api/kernels/org/kernel-two/discussions/1$", url)) return(private$factory$response(list(
+          num = 1L, title = "Privacy", createdAt = "2022-01-01T00:00:00Z", isPullRequest = FALSE,
+          status = "closed", author = list(name = "person", type = "user"), events = list())))
+        stop("Rota de Kernels simulada desconhecida: ", url)
+      }
+      http <- private$factory$http(fixture, "huggingface", transport)
+      testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, http)$run(), "completed")
+      repos <- fixture$store$query("SELECT repo_type,status FROM repositories WHERE platform='huggingface' ORDER BY identifier")
+      testthat::expect_identical(repos$repo_type, c("kernel", "kernel"))
+      testthat::expect_true(all(repos$status == "eligible"))
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='event'")$n, 1L)
+      testthat::expect_true(grepl("helper-bot", fixture$store$query("SELECT payload FROM artifacts WHERE kind='event'")$payload[[1L]], fixed = TRUE))
+      testthat::expect_true(any(grepl("/api/kernels?", requests, fixed = TRUE)))
+      testthat::expect_true(any(grepl("/kernels/org/kernel-two/resolve/main/README.md", requests, fixed = TRUE)))
+      testthat::expect_true(all(grepl("huggingface.co/kernels/org/kernel-", fixture$store$query("SELECT url FROM artifacts WHERE kind='discussion'")$url, fixed = TRUE)))
+      testthat::expect_false(any(grepl("/api/buckets", requests, fixed = TRUE)))
     }),
     storage = function() testthat::test_that("bancos oficiais são preservados até promoção explícita", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
@@ -803,7 +954,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
       fixture$config$osi$licenses <- Filter(function(x) x$id == "MIT", fixture$config$osi$licenses)
       limits <- fixture$config$settings$pilot
-      limits$github_repositories <- 2L; limits$github_issues <- 1L; limits$github_comments <- 1L
+      limits$github_issues <- 1L; limits$github_comments <- 1L
       limits$hf_discovered_per_type <- 2L; limits$hf_eligible_per_type <- 1L; limits$hf_discussions_per_repo <- 2L
       fixture$config$settings$pilot <- limits
       mock <- MockHubTransport$new(private$factory)
@@ -830,16 +981,99 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       }
       gh <- private$factory$http(fixture, "github", transport)
       testthat::expect_identical(GitHubCollector$new(fixture$config, fixture$store, gh, TRUE)$run(), "completed")
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='github'")$n, 2L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='github'")$n, 4L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='issue'")$n, 1L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='comment'")$n, 1L)
       hf <- private$factory$http(fixture, "huggingface", transport)
       testthat::expect_identical(HuggingFaceCollector$new(fixture$config, fixture$store, hf, TRUE)$run(), "completed")
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 4L)
-      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 2L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM repositories WHERE platform='huggingface'")$n, 8L)
+      testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM artifacts WHERE kind='discussion'")$n, 4L)
       testthat::expect_false(any(grepl("/discussions/3", mock$requests, fixed = TRUE)))
       testthat::expect_true(all(fixture$store$query("SELECT pilot FROM runs")$pilot == 1L))
       testthat::expect_true("pilot_comment_limit" %in% fixture$store$query("SELECT code FROM problems WHERE resolved=1")$code)
+    }),
+    site_source = function() testthat::test_that("fonte do site trava na primeira coleta integral e nunca volta ao piloto", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      root <- fixture$config$root
+      dir.create(fixture$config$path("site"), recursive = TRUE)
+      marker <- fixture$config$path("site/collection-source.json")
+      pilot_path <- fixture$config$path("site/pilot-summary.json")
+      writeLines(ProtocolTools$new()$json(list(schema_version = 1L, source = "pilot",
+        policy = "permanent_official_after_verified_full_collection",
+        official_locked = FALSE, history = list())), marker)
+      pilot <- list(schema_version = 1L, source = "pilot", scope = "limited_pilot_not_scientific_population",
+        collected = list(started = "2026-10-01T00:00:00Z", finished = "2026-10-01T01:00:00Z"),
+        protocol = list(version = "1.2.0", cutoff = "2026-09-22", config_hash = "pilot-config"),
+        run_ids = list(github = "pilot-gh", huggingface = "pilot-hf"),
+        limits = as.list(fixture$config$settings$pilot),
+        spaces_included = FALSE,
+        coverage = list(catalogued = 10L, eligible = 4L, legal_discussions = 2L, repositories_with_evidence = 2L,
+          github = list(catalogued = 2L, eligible = 1L, legal_discussions = 1L, repositories_with_evidence = 1L), huggingface = list(
+            catalogued = 8L, eligible = 3L, legal_discussions = 1L, repositories_with_evidence = 1L,
+            models = list(catalogued = 3L, eligible = 2L, legal_discussions = 1L),
+            datasets = list(catalogued = 5L, eligible = 2L, legal_discussions = 1L),
+            spaces = list(catalogued = 0L, eligible = 0L, legal_discussions = 0L))),
+        counts = list(catalogued = 10L, eligible = 4L, legal_discussions = 2L))
+      source <- SiteDataSource$new(fixture$config)
+      testthat::expect_true(source$update_pilot(pilot))
+      testthat::expect_identical(source$select()$source, "pilot")
+      dir.create(fixture$config$path("inputs"), recursive = TRUE)
+      file.copy(private$config$path("inputs/reference"), fixture$config$path("inputs"), recursive = TRUE)
+      file.copy(private$config$path("site/index-template.md"), fixture$config$path("site"), overwrite = TRUE)
+      site_state <- SiteWriter$new(fixture$config)$prepare()
+      testthat::expect_identical(site_state$repositories_with_evidence, "2")
+      testthat::expect_match(site_state$provenance, 'data-value-github_results_limit="1000"')
+      testthat::expect_false(grepl("github_limit", site_state$provenance, fixed = TRUE))
+      rendered_source <- paste(readLines(fixture$config$path("index.qmd"), warn = FALSE), collapse = "\n")
+      testthat::expect_match(rendered_source, "Repositórios com menções a leis")
+      testthat::expect_false(grepl("Discussões únicas com evidência legal", rendered_source, fixed = TRUE))
+      summary_text <- paste(readLines(fixture$config$path("site/summary.json"), warn = FALSE), collapse = "\n")
+      testthat::expect_false(grepl("legal_discussions|models|datasets", summary_text, perl = TRUE))
+
+      db_path <- fixture$config$path("inputs/data/research.sqlite")
+      dir.create(dirname(db_path), recursive = TRUE)
+      store <- AuditStore$new(db_path, fixture$config)
+      journal <- CollectionJournal$new(fixture$config)
+      store$start("github", pilot = FALSE); store$finish("completed")
+      journal$record("github", store$run_id, "completed", fixture$config)
+      incomplete_run <- store$run_id
+      store$close()
+      testthat::expect_error(source$lock_official(db_path, complete_run = TRUE), "huggingface")
+      testthat::expect_identical(source$select()$source, "pilot")
+
+      store <- AuditStore$new(db_path, fixture$config)
+      store$start("huggingface", pilot = FALSE); store$finish("completed")
+      journal$record("huggingface", store$run_id, "completed", fixture$config)
+      store$close()
+      source$lock_official(db_path, complete_run = TRUE)
+      selected <- source$select()
+      testthat::expect_identical(selected$source, "official")
+      testthat::expect_true(file.exists(selected$path))
+      official_path <- selected$path
+      failed_path <- fixture$config$path("inputs/data/later-partial.sqlite")
+      failed_store <- AuditStore$new(failed_path, fixture$config)
+      failed_store$start("github"); failed_store$finish("completed")
+      journal$record("github", failed_store$run_id, "completed", fixture$config)
+      failed_store$close()
+      testthat::expect_error(source$lock_official(failed_path, complete_run = TRUE), "huggingface")
+      testthat::expect_identical(source$select()$path, official_path)
+      before <- readBin(pilot_path, "raw", n = file.info(pilot_path)$size)
+      pilot$collected$finished <- "2026-10-20T00:00:00Z"
+      testthat::expect_false(source$update_pilot(pilot))
+      testthat::expect_identical(source$select()$source, "official")
+      testthat::expect_identical(readBin(pilot_path, "raw", n = file.info(pilot_path)$size), before)
+      state_bytes <- readBin(marker, "raw", n = file.info(marker)$size)
+      state <- ProtocolTools$new()$decode(rawToChar(state_bytes))
+      state$source <- "pilot"; state$official_locked <- FALSE
+      writeLines(ProtocolTools$new()$json(state), marker)
+      testthat::expect_error(source$select(), "retorno ao piloto")
+      writeBin(state_bytes, marker)
+
+      testthat::expect_true(file.remove(official_path))
+      testthat::expect_error(source$select(), "snapshot oficial")
+      marker_data <- ProtocolTools$new()$decode(paste(readLines(marker), collapse = "\n"))
+      testthat::expect_true(isTRUE(marker_data$official_locked))
+      testthat::expect_identical(marker_data$official$run_ids$github, incomplete_run)
     }),
     unavailability = function() testthat::test_that("Discussions desativadas ficam separadas de falhas HTTP", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
@@ -945,10 +1179,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_silent(AnalysisGate$new(fixture$config, fixture$store)$verify())
       result <- AnalysisExporter$new(fixture$config, fixture$store)$run()
       coding <- utils::read.csv(file.path(result$path, "coding.csv"), colClasses = "character")
-      testthat::expect_equal(nrow(coding), 6L)
-      testthat::expect_equal(nrow(result$sample), 10L)
+      testthat::expect_equal(nrow(coding), 10L)
+      testthat::expect_equal(nrow(result$sample), 18L)
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE code='search_empty_second' AND resolved=0")$n, 1L)
-      testthat::expect_equal(length(unique(coding$unit_key)), 3L)
+      testthat::expect_equal(length(unique(coding$unit_key)), 5L)
       testthat::expect_equal(anyDuplicated(coding[c("unit_key", "reviewer", "codebook_version")]), 0L)
       testthat::expect_true(all(coding$relevance == ""))
       testthat::expect_true(all(coding$categories == ""))
@@ -959,6 +1193,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       root <- tempfile("privacy-app-"); dir.create(root)
       on.exit(unlink(root, recursive = TRUE), add = TRUE)
       file.copy(private$config$path("config"), root, recursive = TRUE)
+      dir.create(file.path(root, "site"))
+      file.copy(private$config$path("site/collection-source.json"), file.path(root, "site"))
       osi <- private$config$osi
       osi$licenses <- Filter(function(x) x$id %in% c("MIT", "Apache-2.0"), osi$licenses)
       writeLines(ProtocolTools$new()$json(osi), file.path(root, "config/osi-licenses.json"))
@@ -990,7 +1226,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       config <- ProjectConfig$new(root)
       path <- config$path(config$settings$paths$database)
       store <- AuditStore$new(path, config)
-      testthat::expect_equal(sum(store$counts()$legal_discussions$n), 3L)
+      testthat::expect_equal(sum(store$counts()$legal_discussions$n), 5L)
       store$close()
       unlink(file.path(root, "outputs/metadata/site-failure.txt"))
       app$run("--analyze")
@@ -1019,7 +1255,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_silent(AnalysisGate$new(config, gap_store)$verify())
       gap_store$close()
       testthat::expect_true(file.exists(config$path("inputs/final/collection/coding.csv")))
-      testthat::expect_equal(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 10L)
+      testthat::expect_equal(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 18L)
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- TRUE
       partial <- capture.output(app$run("--run"))
@@ -1134,7 +1370,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       osi$licenses <- Filter(function(x) x$id == "MIT", osi$licenses)
       writeLines(ProtocolTools$new()$json(osi), file.path(root, "config/osi-licenses.json"))
       dir.create(file.path(root, "site"))
-      writeLines("Coleta: {{DISCUSSIONS}}", file.path(root, "site/index-template.md"))
+      file.copy(private$config$path("site/collection-source.json"), file.path(root, "site"))
+      writeLines("Coleta: {{REPOSITORIES_WITH_EVIDENCE}}", file.path(root, "site/index-template.md"))
       dir.create(file.path(root, "inputs/reference"), recursive = TRUE)
       file.copy(private$config$path("inputs/reference/literature_methods.md"), file.path(root, "inputs/reference"))
       dir.create(file.path(root, "bin"))
@@ -1168,8 +1405,11 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_false(grepl("Mensagem interna", text))
       testthat::expect_false(grepl("geração do site falhou", text))
       testthat::expect_false(any(grepl("[\r\033]", output)))
+      site_failure <- file.path(root, "outputs/metadata/site-failure.txt")
+      testthat::expect_false(file.exists(site_failure), info = if (file.exists(site_failure))
+        paste(readLines(site_failure, warn = FALSE), collapse = "\n") else "")
       testthat::expect_true(file.exists(file.path(root, "_site/index.html")))
-      testthat::expect_equal(nrow(utils::read.csv(file.path(root, "inputs/final/collection/sample.csv"))), 10L)
+      testthat::expect_equal(nrow(utils::read.csv(file.path(root, "inputs/final/collection/sample.csv"))), 18L)
       testthat::expect_false(dir.exists(file.path(root, ".run-lock")))
     }),
     structure = function() testthat::test_that("uma classe por arquivo, objetos bloqueados e complexidade limitada", {
