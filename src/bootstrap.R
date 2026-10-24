@@ -4,6 +4,10 @@ ProjectBootstrap <- R6::R6Class("ProjectBootstrap",
       private$root <- normalizePath(root, mustWork = TRUE)
     },
     run = function(args = character(), started = NULL) {
+      if (length(args) && identical(args[[1L]], "--internal")) {
+        if (length(args) != 2L) stop("Informe uma ação interna válida.", call. = FALSE)
+        return(self$run_internal(args[[2L]]))
+      }
       help_requested <- !length(args) || (length(args) == 1L && args[[1L]] %in% c("--help", "-h"))
       environment <- private$load_environment(check_dependencies = !help_requested)
       environment$ProjectApplication$new(private$root, environment, started = started)$run(args)

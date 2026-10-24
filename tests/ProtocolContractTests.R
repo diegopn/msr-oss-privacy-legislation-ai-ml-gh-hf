@@ -60,7 +60,15 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         testthat::expect_equal(if (is.null(status)) 0L else status, 0L,
           info = paste(output, collapse = "\n"))
         testthat::expect_true(any(grepl("Modalidades:", output, fixed = TRUE)))
+        testthat::expect_false(any(grepl("--internal", output, fixed = TRUE)))
       }
+      output <- suppressWarnings(system2(command, c(script, "--internal", "invalid"),
+        env = c(paste0("R_LIBS_USER=", library), paste0("R_LIBS_SITE=", library)),
+        stdout = TRUE, stderr = TRUE))
+      status <- attr(output, "status")
+      testthat::expect_equal(if (is.null(status)) 0L else status, 1L,
+        info = paste(output, collapse = "\n"))
+      testthat::expect_true(any(grepl("Ação interna inválida", output, fixed = TRUE)))
     }),
     configuration = function() testthat::test_that("protocolo e fontes permanecem explícitos", {
       c <- private$config

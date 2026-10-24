@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: _site
   pre-render:
-    - Rscript scripts/internal.R prepare-site
+    - Rscript main.R --internal prepare-site
   render:
     - /index.qmd
   resources:

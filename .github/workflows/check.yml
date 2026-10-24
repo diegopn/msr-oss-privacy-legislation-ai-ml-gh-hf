@@ -30,4 +30,4 @@ jobs:
           ))
           '
       - name: Contratos e testes com APIs simuladas
-        run: Rscript scripts/internal.R tests
+        run: Rscript main.R --internal tests
