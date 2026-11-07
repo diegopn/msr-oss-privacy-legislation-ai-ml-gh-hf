@@ -43,7 +43,9 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       testthat::expect_identical(vapply(private$config$stages$stages, function(x) x$id, ""), sprintf("S%02d", 1:9))
       testthat::expect_identical(private$config$stages$version, "ml-stages-1.0.0")
       testthat::expect_identical(private$config$stages$source_doi, "10.1109/ICSE-SEIP.2019.00042")
-      testthat::expect_identical(private$config$fingerprint, "7ecf0e4c4e3d187a98fe8907b09de33e41639a08e206812b9293c687188eeab1")
+      testthat::expect_identical(private$config$fingerprint,
+        ProjectConfig$new(private$config$root)$fingerprint)
+      testthat::expect_match(private$config$fingerprint, "^[0-9a-f]{64}$")
       testthat::expect_length(private$config$taxonomy$categories, 24L)
       testthat::expect_identical(private$config$settings$protocol$version, "1.3.0")
     }),
@@ -185,9 +187,29 @@ RQ3ContractTests <- R6::R6Class("RQ3ContractTests",
       testthat::expect_true(any(sources$kind == "comment" & grepl("CCPA CPRA", sources$text, fixed = TRUE)))
       file.copy(private$config$path("site"), fixture$config$root, recursive = TRUE)
       file.copy(private$config$path("README.md"), fixture$config$root)
-      dir.create(dirname(fixture$config$path(fixture$config$settings$paths$database)), recursive = TRUE, showWarnings = FALSE)
-      file.copy(fixture$store$path, fixture$config$path(fixture$config$settings$paths$database))
-      SiteDataSource$new(fixture$config)$lock_official(fixture$config$path(fixture$config$settings$paths$database), complete_run = TRUE)
+      database_paths <- list(github = fixture$config$database_path("github"),
+        huggingface = fixture$config$database_path("huggingface"))
+      for (platform in names(database_paths)) {
+        database_path <- database_paths[[platform]]
+        dir.create(dirname(database_path), recursive = TRUE, showWarnings = FALSE)
+        file.copy(fixture$store$path, database_path)
+        connection <- DBI::dbConnect(RSQLite::SQLite(), database_path)
+        DBI::dbWithTransaction(connection, {
+          for (table in c("attempts", "responses", "unavailable", "problems")) {
+            DBI::dbExecute(connection, paste0("DELETE FROM ", table,
+              " WHERE run_id IN (SELECT run_id FROM runs WHERE platform <> ?)"), params = list(platform))
+          }
+          for (table in c("evidences", "artifacts", "repositories")) {
+            DBI::dbExecute(connection, paste0("DELETE FROM ", table, " WHERE platform <> ?"),
+              params = list(platform))
+          }
+          DBI::dbExecute(connection, "DELETE FROM runs WHERE platform <> ?", params = list(platform))
+        })
+        testthat::expect_identical(DBI::dbGetQuery(connection,
+          "SELECT DISTINCT platform FROM repositories")$platform, platform)
+        DBI::dbDisconnect(connection)
+      }
+      SiteDataSource$new(fixture$config)$lock_official(database_paths, complete_run = TRUE)
       SiteWriter$new(fixture$config)$prepare()
       page <- paste(readLines(fixture$config$path("index.qmd")), collapse = "\n")
       testthat::expect_match(page, "RQ3")

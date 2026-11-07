@@ -21,22 +21,31 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
         stop("Registro da fonte oficial inválido; geração interrompida sem retorno ao piloto.", call. = FALSE)
       }
       record <- state$official
-      snapshot <- private$config$path(private$tools$scalar(record$snapshot_path))
-      if (!file.exists(snapshot)) {
-        stop("Fonte oficial já travada, mas o snapshot oficial está indisponível: ", snapshot,
-          ". O site não retornará ao piloto.", call. = FALSE)
+      if (!is.list(record$snapshots) || !all(c("github", "huggingface") %in% names(record$snapshots))) {
+        stop("A fonte oficial foi travada em formato de banco único; os dois bancos oficiais são necessários. O site não retornará ao piloto.", call. = FALSE)
       }
-      hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
-      if (!identical(hash, private$tools$scalar(record$sha256))) {
-        stop("Snapshot oficial alterado ou corrompido; geração interrompida sem retorno ao piloto.", call. = FALSE)
-      }
-      store <- AuditStore$new(snapshot, private$config, readonly = TRUE)
-      on.exit(store$close(), add = TRUE)
-      tryCatch(AnalysisGate$new(private$config, store)$verify_recorded_runs(record$run_ids), error = function(error) {
+      paths <- lapply(c("github", "huggingface"), function(platform) {
+        item <- record$snapshots[[platform]]
+        snapshot <- private$config$path(private$tools$scalar(item$path))
+        if (!file.exists(snapshot)) {
+          stop("Fonte oficial já travada, mas o snapshot de ", platform,
+            " está indisponível. O site não retornará ao piloto.", call. = FALSE)
+        }
+        hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
+        if (!identical(hash, private$tools$scalar(item$sha256))) {
+          stop("Snapshot oficial de ", platform,
+            " alterado ou corrompido; geração interrompida sem retorno ao piloto.", call. = FALSE)
+        }
+        snapshot
+      })
+      names(paths) <- c("github", "huggingface")
+      stores <- PlatformStores$new(lapply(paths, AuditStore$new, config = private$config, readonly = TRUE))
+      on.exit(stores$close(), add = TRUE)
+      tryCatch(AnalysisGate$new(private$config, stores)$verify_recorded_runs(record$run_ids), error = function(error) {
         stop("Snapshot oficial indisponível ou inválido; geração interrompida sem retorno ao piloto: ",
           conditionMessage(error), call. = FALSE)
       })
-      list(source = "official", path = snapshot, record = record, state = state)
+      list(source = "official", paths = paths, record = record, state = state)
     },
     update_pilot = function(summary) {
       if (!file.exists(private$marker)) return(FALSE)
@@ -65,64 +74,21 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
         run_ids = run_ids, limits = private$config$settings$pilot, coverage = coverage,
         spaces_included = private$spaces_included(runs), kernels_included = private$kernels_included(runs))
     },
-    lock_official = function(database_path, complete_run = FALSE) {
-      if (!isTRUE(complete_run)) stop("Apenas --run pode travar a primeira fonte oficial.", call. = FALSE)
-      if (!file.exists(database_path)) stop("Banco da coleta oficial ausente: ", database_path, call. = FALSE)
-      store <- AuditStore$new(database_path, private$config, readonly = TRUE)
-      on.exit(store$close(), add = TRUE)
-      AnalysisGate$new(private$config, store)$verify()
-      runs <- store$query(paste("SELECT run_id,platform,status,pilot,cutoff,version,config_hash,started,finished",
-        "FROM runs WHERE pilot=0 AND platform IN ('github','huggingface') ORDER BY rowid"))
-      latest <- lapply(c("github", "huggingface"), function(platform) {
-        rows <- runs[runs$platform == platform, , drop = FALSE]
-        if (!nrow(rows)) stop("Coleta oficial ausente: ", if (platform == "github") "GitHub" else "Hugging Face", call. = FALSE)
-        rows[nrow(rows), , drop = FALSE]
-      })
-      names(latest) <- c("github", "huggingface")
-      run_ids <- lapply(latest, function(rows) rows$run_id[[1L]])
-      problems <- store$query("SELECT COUNT(*) n FROM problems WHERE resolved=0 AND run_id IN (?,?)",
-        unname(unlist(run_ids)))$n[[1L]]
-      if (problems > 0L) {
-        previous <- private$read_state()
-        return(list(locked = FALSE, source = previous$source,
-          reason = "A coleta terminou com lacunas de cobertura não verificadas."))
-      }
-      integrity <- store$query("PRAGMA integrity_check")[[1L]]
-      if (!identical(integrity, "ok")) stop("Banco oficial com falha de integridade; transição do site preservada.", call. = FALSE)
-      coverage <- private$coverage(store)
-      relative_directory <- file.path(private$config$settings$paths$archive, "site-source")
-      directory <- private$config$path(relative_directory)
-      dir.create(directory, recursive = TRUE, showWarnings = FALSE)
-      identity <- private$tools$hash(paste(unlist(run_ids), collapse = "\n"))
-      filename <- paste0(substr(identity, 1L, 24L), ".sqlite")
-      relative_snapshot <- file.path(relative_directory, filename)
-      snapshot <- private$config$path(relative_snapshot)
-      if (file.exists(snapshot)) {
-        existing_hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
-        source_hash <- digest::digest(file = database_path, algo = "sha256", serialize = FALSE)
-        if (!identical(existing_hash, source_hash)) {
-          stop("Já existe um snapshot diferente para os mesmos identificadores; fonte anterior preservada.", call. = FALSE)
-        }
-      } else {
-        temporary <- tempfile(".site-source-", directory, ".sqlite")
-        if (!file.copy(database_path, temporary)) stop("Não foi possível preservar o snapshot oficial; fonte anterior mantida.", call. = FALSE)
-        on.exit(unlink(temporary), add = TRUE)
-        if (!file.rename(temporary, snapshot)) stop("Não foi possível finalizar o snapshot oficial; fonte anterior mantida.", call. = FALSE)
-      }
-      snapshot_hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
-      info <- list(snapshot_path = relative_snapshot, sha256 = snapshot_hash,
-        saved_at = private$tools$now(), config_hash = as.character(latest$github$config_hash[[1L]]),
-        protocol_version = as.character(latest$github$version[[1L]]), cutoff = as.character(latest$github$cutoff[[1L]]),
-        run_ids = run_ids, coverage = coverage)
-      previous <- private$read_state()
-      history <- previous$history
-      if (!is.list(history)) history <- list()
-      history[[length(history) + 1L]] <- info
-      state <- list(schema_version = 1L, policy = "permanent_official_after_verified_full_collection",
-        source = "official", official_locked = TRUE,
-        locked_at = if (isTRUE(previous$official_locked)) previous$locked_at else info$saved_at,
-        official = info, history = history)
-      private$write_json(private$marker, state)
+    lock_official = function(database_paths, complete_run = FALSE) {
+      if (!isTRUE(complete_run)) stop("Apenas uma análise após as duas coletas pode travar a fonte oficial.", call. = FALSE)
+      database_paths <- private$validate_database_paths(database_paths)
+      stores <- private$open_official_stores(database_paths)
+      on.exit(stores$close(), add = TRUE)
+      AnalysisGate$new(private$config, stores)$verify()
+      latest <- private$latest_official_runs(stores)
+      incomplete <- names(latest)[vapply(latest, is.null, logical(1))]
+      if (length(incomplete)) return(private$retain_previous_source(incomplete[[1L]]))
+      snapshot_state <- new.env(parent = emptyenv())
+      snapshot_state$created <- character()
+      on.exit(if (length(snapshot_state$created)) unlink(snapshot_state$created), add = TRUE)
+      info <- private$official_info(database_paths, stores, latest, snapshot_state)
+      state <- private$save_official_state(info)
+      snapshot_state$created <- character()
       invisible(list(locked = TRUE, state = state))
     }
   ),
@@ -130,25 +96,129 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
     config = NULL, tools = NULL, marker = NULL, pilot_summary_path = NULL,
     read_json = function(path, label) tryCatch(private$tools$decode(paste(readLines(path, warn = FALSE), collapse = "\n")),
       error = function(error) stop(label, " inválido: ", conditionMessage(error), call. = FALSE)),
+    validate_database_paths = function(database_paths) {
+      platforms <- c("github", "huggingface")
+      if (!is.list(database_paths) || !all(platforms %in% names(database_paths))) {
+        stop("São necessários os bancos oficiais de GitHub e Hugging Face.", call. = FALSE)
+      }
+      database_paths <- database_paths[platforms]
+      for (platform in platforms) {
+        if (length(database_paths[[platform]]) != 1L || !file.exists(database_paths[[platform]])) {
+          stop("Banco da coleta oficial ausente: ", platform, call. = FALSE)
+        }
+      }
+      database_paths
+    },
+    open_official_stores = function(database_paths) {
+      PlatformStores$new(lapply(database_paths, AuditStore$new, config = private$config, readonly = TRUE))
+    },
+    latest_official_runs = function(stores) {
+      platforms <- c("github", "huggingface")
+      runs <- lapply(platforms, private$latest_official_run, stores = stores)
+      names(runs) <- platforms
+      runs
+    },
+    latest_official_run = function(platform, stores) {
+      store <- stores$for_platform(platform)
+      rows <- store$query(paste("SELECT run_id,platform,status,pilot,cutoff,version,config_hash,started,finished",
+        "FROM runs WHERE pilot=0 AND platform=? ORDER BY rowid DESC LIMIT 1"), list(platform))
+      if (nrow(rows) != 1L) stop("Coleta oficial ausente: ", platform, call. = FALSE)
+      unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE resolved=0 AND run_id=?",
+        list(rows$run_id[[1L]]))$n[[1L]]
+      if (unresolved > 0L) return(NULL)
+      rows
+    },
+    retain_previous_source = function(platform) {
+      previous <- private$read_state()
+      list(locked = FALSE, source = previous$source,
+        reason = paste("A coleta", platform, "terminou com lacunas de cobertura não verificadas."))
+    },
+    official_info = function(database_paths, stores, latest, snapshot_state) {
+      run_ids <- lapply(latest, function(rows) rows$run_id[[1L]])
+      relative_directory <- file.path(private$config$settings$paths$archive, "site-source")
+      directory <- private$config$path(relative_directory)
+      dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+      snapshots <- lapply(names(database_paths), private$snapshot_metadata,
+        database_paths = database_paths, run_ids = run_ids, relative_directory = relative_directory,
+        directory = directory, snapshot_state = snapshot_state)
+      names(snapshots) <- names(database_paths)
+      list(snapshots = snapshots, saved_at = private$tools$now(),
+        config_hash = as.character(latest$github$config_hash[[1L]]),
+        protocol_version = as.character(latest$github$version[[1L]]),
+        cutoff = as.character(latest$github$cutoff[[1L]]), run_ids = run_ids,
+        coverage = private$coverage(stores))
+    },
+    snapshot_metadata = function(platform, database_paths, run_ids, relative_directory, directory, snapshot_state) {
+      filename <- paste0(platform, "-", substr(private$tools$hash(run_ids[[platform]]), 1L, 24L), ".sqlite")
+      relative_snapshot <- file.path(relative_directory, filename)
+      snapshot <- private$config$path(relative_snapshot)
+      if (file.exists(snapshot)) {
+        return(private$verify_existing_snapshot(snapshot, database_paths[[platform]], relative_snapshot))
+      }
+      private$create_snapshot(database_paths[[platform]], snapshot, directory, platform, snapshot_state)
+      list(path = relative_snapshot, sha256 = digest::digest(file = snapshot, algo = "sha256", serialize = FALSE))
+    },
+    verify_existing_snapshot = function(snapshot, source, relative_snapshot) {
+      existing_hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
+      source_hash <- digest::digest(file = source, algo = "sha256", serialize = FALSE)
+      if (!identical(existing_hash, source_hash)) {
+        stop("Já existe um snapshot diferente para o mesmo identificador de execução; fonte anterior preservada.", call. = FALSE)
+      }
+      list(path = relative_snapshot, sha256 = existing_hash)
+    },
+    create_snapshot = function(source, snapshot, directory, platform, snapshot_state) {
+      temporary <- tempfile(paste0(".site-source-", platform, "-"), directory, ".sqlite")
+      if (!file.copy(source, temporary)) stop("Não foi possível preservar o snapshot de ", platform, "; fonte anterior mantida.", call. = FALSE)
+      if (!file.rename(temporary, snapshot)) {
+        unlink(temporary)
+        stop("Não foi possível finalizar o snapshot de ", platform, "; fonte anterior mantida.", call. = FALSE)
+      }
+      snapshot_state$created <- c(snapshot_state$created, snapshot)
+      invisible(TRUE)
+    },
+    save_official_state = function(info) {
+      previous <- private$read_state()
+      history <- previous$history
+      if (!is.list(history)) history <- list()
+      history[[length(history) + 1L]] <- info
+      state <- list(schema_version = 2L, policy = "permanent_official_after_verified_full_collection",
+        source = "official", official_locked = TRUE,
+        locked_at = if (isTRUE(previous$official_locked)) previous$locked_at else info$saved_at,
+        official = info, history = history)
+      private$write_json(private$marker, state)
+      state
+    },
     read_state = function() {
       if (!file.exists(private$marker)) stop("Registro persistente da fonte do site ausente: ", private$marker, call. = FALSE)
       state <- private$read_json(private$marker, "Registro persistente da fonte")
-      if (!private$valid_state_schema(state)) {
-        stop("Registro persistente da fonte do site inválido.", call. = FALSE)
-      }
+      private$validate_state(state)
+      state
+    },
+    validate_state = function(state) {
+      if (!private$valid_state_schema(state)) private$reject_invalid_state(state)
       if (identical(state$source, "pilot") && private$has_official_history(state)) {
         stop("O registro já contém uma transição oficial; retorno ao piloto é proibido.", call. = FALSE)
       }
       if (isTRUE(state$official_locked) != identical(state$source, "official")) {
         stop("Registro persistente da transição oficial inconsistente.", call. = FALSE)
       }
-      state
+      invisible(TRUE)
+    },
+    reject_invalid_state = function(state) {
+      if (is.list(state) && identical(state$source, "official") && isTRUE(state$official_locked) &&
+          identical(as.integer(state$schema_version), 1L)) {
+        stop("A fonte oficial está registrada no formato antigo de banco único. Os dois bancos precisam ser analisados novamente; o site não retornará ao piloto.", call. = FALSE)
+      }
+      stop("Registro persistente da fonte do site inválido.", call. = FALSE)
     },
     valid_state_schema = function(state) {
       is.list(state) && private$valid_state_version(state) &&
         private$valid_state_policy(state) && private$valid_state_source(state)
     },
-    valid_state_version = function(state) identical(as.integer(state$schema_version), 1L),
+    valid_state_version = function(state) {
+      expected <- if (identical(state$source, "official")) 2L else 1L
+      identical(as.integer(state$schema_version), expected)
+    },
     valid_state_policy = function(state) identical(state$policy, "permanent_official_after_verified_full_collection"),
     valid_state_source = function(state) {
       state$source %in% c("pilot", "official") && is.logical(state$official_locked) && length(state$official_locked) == 1L
@@ -211,7 +281,8 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
     has_official_history = function(state) {
       if (!is.list(state$history) || !length(state$history)) return(FALSE)
       any(vapply(state$history, function(item) is.list(item) &&
-        is.list(item$run_ids) && !is.null(item$snapshot_path) && !is.null(item$sha256), logical(1)))
+        is.list(item$run_ids) && (!is.null(item$snapshots) ||
+          (!is.null(item$snapshot_path) && !is.null(item$sha256))), logical(1)))
     },
     write_json = function(path, value) {
       dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)

@@ -41,19 +41,19 @@ SiteWriter <- R6::R6Class("SiteWriter",
         catalogued = "—", eligible = "—", repositories_with_evidence = "—", generated = private$tools$now(),
         source_run_ids = selection$record$run_ids, coverage = private$public_coverage(selection$record$coverage),
         provenance = private$provenance(selection$record, "official"))
-      store <- AuditStore$new(selection$path, private$config, readonly = TRUE)
-      on.exit(store$close(), add = TRUE)
-      AnalysisGate$new(private$config, store)$verify_recorded_runs(selection$record$run_ids)
+      stores <- PlatformStores$new(lapply(selection$paths, AuditStore$new, config = private$config, readonly = TRUE))
+      on.exit(stores$close(), add = TRUE)
+      AnalysisGate$new(private$config, stores)$verify_recorded_runs(selection$record$run_ids)
       manifest <- private$config$path(file.path(private$config$settings$paths$analysis, "manifest.json"))
-      counts <- store$counts()
+      counts <- stores$counts()
       result$catalogued <- as.character(sum(counts$catalogued$n))
       result$eligible <- as.character(sum(counts$eligible$n))
       result$repositories_with_evidence <- as.character(sum(counts$repositories_with_evidence$n))
       if (!file.exists(manifest)) return(result)
       data <- private$tools$decode(paste(readLines(manifest, warn = FALSE), collapse = "\n"))
       runs <- unname(unlist(selection$record$run_ids, use.names = FALSE))
-      manifest_runs <- vapply(data$runs, function(run) run$run_id, "")
-      if (!identical(data$config_hash, private$config$fingerprint) || !identical(runs, manifest_runs)) return(result)
+      manifest_runs <- unname(unlist(data$collection_run_ids, use.names = FALSE))
+      if (!identical(data$config_hash, private$config$fingerprint) || !setequal(runs, manifest_runs)) return(result)
       result$status <- "analysis_ready"
       result$message <- "Coleta oficial integral e amostragem concluídas."
       result

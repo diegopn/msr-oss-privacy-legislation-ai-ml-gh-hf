@@ -21,6 +21,13 @@ ProjectConfig <- R6::R6Class("ProjectConfig",
       if (grepl("^/", relative)) return(relative)
       file.path(self$root, relative)
     },
+    database_path = function(platform = NULL, pilot = FALSE) {
+      if (isTRUE(pilot)) return(self$path(self$settings$paths$pilot_database))
+      if (length(platform) != 1L || !platform %in% c("github", "huggingface")) {
+        stop("Informe a plataforma para localizar o banco oficial.", call. = FALSE)
+      }
+      self$path(self$settings$paths[[paste0(platform, "_database")]])
+    },
     reference_status = function() {
       c(concepts = isTRUE(self$concepts$reviewed) && length(self$concepts$concepts) == 20L,
         taxonomy = isTRUE(self$taxonomy$reviewed) && length(self$taxonomy$categories) == 24L)
@@ -49,6 +56,8 @@ ProjectConfig <- R6::R6Class("ProjectConfig",
     },
     validate = function() {
       s <- self$settings
+      databases <- unlist(s$paths[c("github_database", "huggingface_database", "pilot_database")], use.names = FALSE)
+      canonical_databases <- vapply(databases, function(path) normalizePath(self$path(path), mustWork = FALSE), "")
       stopifnot(length(s$protocol$laws) == 4L,
                 identical(vapply(s$protocol$laws, `[[`, "", "id"),
                           c("GDPR", "CCPA", "CPRA", "Data Protection Act")),
@@ -59,7 +68,8 @@ ProjectConfig <- R6::R6Class("ProjectConfig",
                 s$sampling$confidence == 0.99, s$sampling$margin == 0.05,
                 s$sampling$proportion == 0.5, s$sampling$seed == 20260920,
                 length(s$sampling$reviewers) == 2L, !anyDuplicated(s$sampling$reviewers),
-                all(nzchar(s$sampling$reviewers)))
+                all(nzchar(s$sampling$reviewers)), length(databases) == 3L,
+                all(nzchar(databases)), !anyDuplicated(canonical_databases))
     },
     validate_references = function() {
       categories <- self$taxonomy$categories

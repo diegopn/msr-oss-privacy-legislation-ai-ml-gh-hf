@@ -47,19 +47,36 @@ Sem token, as coletas ficam sujeitas às cotas anônimas das plataformas.
 
 ## Execução
 
-Use `main.R`. Sem argumentos, ele mostra a ajuda. Execute uma modalidade por vez.
+Use `main.R`. Sem argumentos, ele mostra a ajuda. GitHub e Hugging Face podem ser coletados em paralelo.
 
 | Modalidade | Comando | Resultado |
 |---|---|---|
 | Piloto | `Rscript main.R --pilot` | Coleta limitada em banco separado; não gera o site |
-| GitHub | `Rscript main.R --github` | Atualiza GitHub e gera o site |
-| Hugging Face | `Rscript main.R --huggingface` | Atualiza Hugging Face e gera o site |
-| Análise | `Rscript main.R --analyze` | Prepara análises e site com coletas existentes |
+| GitHub | `Rscript main.R --github` | Atualiza o banco oficial do GitHub |
+| Hugging Face | `Rscript main.R --huggingface` | Atualiza o banco oficial do Hugging Face |
+| Análise | `Rscript main.R --analyze` | Consulta os dois bancos, prepara análises e gera o site |
 | Completa | `Rscript main.R --run` | Coleta as duas plataformas, analisa e gera o site |
 
-Cada nova coleta recomeça a plataforma selecionada. Não há retomada automática
-de uma coleta parcial. O piloto substitui os dados do piloto anterior, mas não
-altera os dados científicos nem as planilhas de análise.
+As coletas isoladas do GitHub e do Hugging Face podem rodar em paralelo: cada
+uma tem banco, diário e trava próprios. Depois que ambas terminarem, use
+`Rscript main.R --analyze` para consultar os dois bancos e gerar o site. A opção
+`--run` continua disponível para fazer as duas coletas em sequência e analisar
+em uma única execução. Cada nova coleta recomeça a plataforma selecionada. Não
+há retomada automática de uma coleta parcial. O piloto substitui os dados do
+piloto anterior, mas não altera os bancos oficiais nem as planilhas de análise.
+
+Para coletar em paralelo, inicie um comando em cada terminal e só depois rode a análise:
+
+```bash
+# Terminal 1
+Rscript main.R --github
+
+# Terminal 2
+Rscript main.R --huggingface
+
+# Após as duas coletas terminarem
+Rscript main.R --analyze
+```
 
 Para ajuda e prévia local:
 
@@ -103,8 +120,10 @@ com semente 20260920 acrescida do índice do estrato.
 
 | Caminho | Conteúdo |
 |---|---|
-| `inputs/data/research.sqlite` | Banco científico atual |
-| `inputs/data/archive/` | Bancos anteriores e snapshot da fonte oficial do site |
+| `inputs/data/github.sqlite` | Banco oficial do GitHub |
+| `inputs/data/huggingface.sqlite` | Banco oficial do Hugging Face |
+| `inputs/data/latest-collection-*.json` | Último resultado registrado por plataforma |
+| `inputs/data/archive/` | Bancos anteriores e snapshots oficiais usados pelo site |
 | `inputs/data/pilot/` | Banco e resumo da última tentativa piloto |
 | `inputs/raw/` | Respostas das APIs por execução |
 | `inputs/final/collection/` | População, amostra, planilhas e manifesto |

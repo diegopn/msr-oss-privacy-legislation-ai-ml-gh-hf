@@ -81,7 +81,8 @@ pilot:
   hf_eligible_per_type: 1000
   hf_discussions_per_repo: 20
 paths:
-  database: inputs/data/research.sqlite
+  github_database: inputs/data/github.sqlite
+  huggingface_database: inputs/data/huggingface.sqlite
   pilot_database: inputs/data/pilot/pilot.sqlite
   raw: inputs/raw
   archive: inputs/data/archive

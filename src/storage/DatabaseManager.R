@@ -1,14 +1,17 @@
 DatabaseManager <- R6::R6Class("DatabaseManager",
   public = list(
     staging = NULL, target = NULL,
-    initialize = function(config, pilot = FALSE, fresh = FALSE) {
+    initialize = function(config, pilot = FALSE, fresh = FALSE, platform = NULL) {
       private$config <- config
       private$pilot <- pilot
-      relative <- if (pilot) config$settings$paths$pilot_database else config$settings$paths$database
-      self$target <- config$path(relative)
+      if (!pilot && (length(platform) != 1L || !platform %in% c("github", "huggingface"))) {
+        stop("Informe a plataforma do banco oficial.", call. = FALSE)
+      }
+      private$platform <- if (pilot) "pilot" else platform
+      self$target <- config$database_path(if (pilot) NULL else platform, pilot = pilot)
       if (pilot) private$reset_pilot()
       dir.create(dirname(self$target), recursive = TRUE, showWarnings = FALSE)
-      self$staging <- tempfile(".staging-", dirname(self$target), ".sqlite")
+      self$staging <- tempfile(paste0(".staging-", private$platform, "-"), dirname(self$target), ".sqlite")
       if (!fresh && file.exists(self$target)) {
         if (!file.copy(self$target, self$staging)) stop("Não foi possível preparar o banco temporário")
       }
@@ -19,9 +22,25 @@ DatabaseManager <- R6::R6Class("DatabaseManager",
         dir.create(archive, recursive = TRUE, showWarnings = FALSE)
         destination <- tempfile(paste0(basename(self$target), "-"), archive, ".sqlite")
         if (!file.copy(self$target, destination)) stop("Não foi possível arquivar o banco anterior")
+        private$previous <- destination
       }
-      if (!file.rename(self$staging, self$target)) stop("Não foi possível promover o banco temporário")
+      private$had_target <- file.exists(self$target)
+      if (!file.rename(self$staging, self$target)) {
+        if (!is.null(private$previous)) file.copy(private$previous, self$target, overwrite = TRUE)
+        stop("Não foi possível promover o banco temporário")
+      }
+      private$promoted <- TRUE
       invisible(self$target)
+    },
+    rollback_promotion = function() {
+      if (!private$promoted) return(invisible(FALSE))
+      if (private$had_target && !is.null(private$previous) && file.exists(private$previous)) {
+        if (!file.copy(private$previous, self$target, overwrite = TRUE)) {
+          stop("Falha ao restaurar o banco oficial anterior: ", self$target, call. = FALSE)
+        }
+      } else unlink(self$target)
+      private$promoted <- FALSE
+      invisible(TRUE)
     },
     preserve_failure = function() {
       if (!file.exists(self$staging)) return(invisible(NULL))
@@ -31,7 +50,8 @@ DatabaseManager <- R6::R6Class("DatabaseManager",
       invisible(destination)
     }
   ), private = list(
-    config = NULL, pilot = FALSE,
+    config = NULL, pilot = FALSE, platform = NULL, previous = NULL,
+    had_target = FALSE, promoted = FALSE,
     reset_pilot = function() {
       paths <- private$config$settings$paths
       directories <- c(dirname(self$target), private$config$path(file.path(paths$raw, "pilot")))
@@ -41,7 +61,8 @@ DatabaseManager <- R6::R6Class("DatabaseManager",
       if (any(basename(directories) != "pilot" | !startsWith(directories, root) | traversal)) {
         stop("A limpeza exige subpastas pilot dentro do projeto")
       }
-      official <- vapply(unlist(paths[c("database", "raw", "archive", "analysis")]), function(path) {
+      official_paths <- c(paths[c("github_database", "huggingface_database", "raw", "archive", "analysis")])
+      official <- vapply(unlist(official_paths), function(path) {
         normalizePath(private$config$path(path), mustWork = FALSE)
       }, "")
       if (any(vapply(directories, function(directory) {

@@ -2,7 +2,7 @@ AnalysisExporter <- R6::R6Class("AnalysisExporter",
   public = list(
     initialize = function(config, store) {
       private$config <- config
-      private$store <- store
+      private$store <- PlatformStores$new(store)
       private$tools <- ProtocolTools$new()
       private$builder <- PopulationBuilder$new(store)
     },
@@ -16,7 +16,7 @@ AnalysisExporter <- R6::R6Class("AnalysisExporter",
       temporary <- tempfile(".analysis-", parent)
       dir.create(temporary)
       on.exit(unlink(temporary, recursive = TRUE), add = TRUE)
-      sources <- private$builder$sources(unique(sampled$sample$unit_key))
+      sources <- private$builder$sources(sampled$sample)
       instrument <- StageAnnotations$new(private$config, sources)
       coding <- instrument$augment(private$coding(sampled$sample, sources))
       independent <- instrument$read(coding_file, coding)
@@ -45,14 +45,28 @@ AnalysisExporter <- R6::R6Class("AnalysisExporter",
   private = list(
     config = NULL, store = NULL, tools = NULL, builder = NULL,
     coding = function(sample, sources) {
-      unique <- sample[!duplicated(sample$unit_key), c("unit_key", "repo_key", "platform", "repo_type", "url"), drop = FALSE]
-      unique$text <- vapply(unique$unit_key, private$builder$texts, "")
-      unique$initial_text <- vapply(unique$unit_key, function(unit)
-        paste(sources$text[sources$unit_key == unit & sources$source_role %in% c("initial", "initial_title")], collapse = "\n\n"), "")
-      unique$comment_context <- vapply(unique$unit_key, function(unit)
-        paste(sources$text[sources$unit_key == unit & !sources$source_role %in% c("initial", "initial_title")], collapse = "\n\n"), "")
-      unique$rq1_context_status <- vapply(unique$unit_key, function(unit)
-        if (any(sources$unit_key == unit & sources$source_role == "unresolved_context")) "initial_text_unresolved" else "separated", "")
+      unique <- sample[!duplicated(sample[c("platform", "unit_key")]),
+        c("unit_key", "repo_key", "platform", "repo_type", "url"), drop = FALSE]
+      unique$text <- vapply(seq_len(nrow(unique)), function(index)
+        private$builder$texts(unique$unit_key[[index]], unique$platform[[index]]), "")
+      unique$initial_text <- vapply(seq_len(nrow(unique)), function(index) {
+        unit <- unique$unit_key[[index]]
+        platform <- unique$platform[[index]]
+        paste(sources$text[sources$unit_key == unit & sources$platform == platform &
+          sources$source_role %in% c("initial", "initial_title")], collapse = "\n\n")
+      }, "")
+      unique$comment_context <- vapply(seq_len(nrow(unique)), function(index) {
+        unit <- unique$unit_key[[index]]
+        platform <- unique$platform[[index]]
+        paste(sources$text[sources$unit_key == unit & sources$platform == platform &
+          !sources$source_role %in% c("initial", "initial_title")], collapse = "\n\n")
+      }, "")
+      unique$rq1_context_status <- vapply(seq_len(nrow(unique)), function(index) {
+        unit <- unique$unit_key[[index]]
+        platform <- unique$platform[[index]]
+        if (any(sources$unit_key == unit & sources$platform == platform &
+            sources$source_role == "unresolved_context")) "initial_text_unresolved" else "separated"
+      }, "")
       output <- list()
       for (reviewer in private$config$settings$sampling$reviewers) {
         rows <- unique
@@ -104,12 +118,16 @@ AnalysisExporter <- R6::R6Class("AnalysisExporter",
     manifest = function(path, kappa, rq3) {
       files <- list.files(path, full.names = TRUE)
       hashes <- setNames(vapply(files, function(file) digest::digest(file = file, algo = "sha256", serialize = FALSE), ""), basename(files))
+      journal <- CollectionJournal$new(private$config)$read()
+      source_run_ids <- lapply(c("github", "huggingface"), function(platform) journal[[platform]]$run_id)
+      names(source_run_ids) <- c("github", "huggingface")
       data <- list(status = "collection_completed_human_evaluation_pending", generated = private$tools$now(),
         config_hash = private$config$fingerprint, protocol = private$config$settings$protocol,
         codebook_version = private$config$taxonomy$version, sampling = private$config$settings$sampling,
         rng = RNGkind(), counts = private$store$counts(), kappa = kappa, rq3 = rq3, sha256 = as.list(hashes),
+        collection_run_ids = source_run_ids,
         runtime = private$runtime(),
-        runs = private$store$query("SELECT * FROM runs WHERE pilot=0 ORDER BY rowid"),
+        runs = private$store$runs(pilot = FALSE),
         limitations = c("Current metadata and edited text; no full historical reconstruction",
           "GitHub root manifests; no source traversal", "HF license index coverage unvalidated",
           "No BERT execution; automatic outputs are not human validation",

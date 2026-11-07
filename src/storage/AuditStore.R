@@ -145,8 +145,9 @@ AuditStore <- R6::R6Class("AuditStore",
     recover_responses = function(platform) {
       private$cache <- new.env(parent = emptyenv())
       if (!private$recover || private$pilot) return(invisible(NULL))
-      target <- private$config$path(private$config$settings$paths$database)
-      files <- list.files(dirname(target), "^\\.staging-.*\\.sqlite$", all.files = TRUE, full.names = TRUE)
+      target <- private$config$database_path(platform)
+      pattern <- paste0("^\\.staging-", platform, "-.*\\.sqlite$")
+      files <- list.files(dirname(target), pattern, all.files = TRUE, full.names = TRUE)
       files <- files[files != self$path]
       dates <- file.info(files)$mtime
       if (file.exists(target)) files <- files[!is.na(dates) & dates >= file.info(target)$mtime]

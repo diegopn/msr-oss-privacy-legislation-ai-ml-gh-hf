@@ -1,19 +1,26 @@
 RunLock <- R6::R6Class("RunLock",
   public = list(
-    initialize = function(root) {
-      private$path <- file.path(root, ".run-lock")
-      dir.create(dirname(private$path), recursive = TRUE, showWarnings = FALSE)
-      if (!dir.create(private$path, showWarnings = FALSE)) {
-        stop("Outra execução possui .run-lock. Verifique o processo antes de remover o lock.",
-             call. = FALSE)
+    initialize = function(root, platforms = c("github", "huggingface")) {
+      valid <- c("github", "huggingface")
+      if (!length(platforms) || any(!platforms %in% valid) || anyDuplicated(platforms)) {
+        stop("Plataformas inválidas para a trava da execução.", call. = FALSE)
       }
-      writeLines(as.character(Sys.getpid()), file.path(private$path, "pid"))
-      private$owned <- TRUE
+      private$paths <- file.path(root, ".run-lock", platforms)
+      dir.create(file.path(root, ".run-lock"), recursive = TRUE, showWarnings = FALSE)
+      for (path in private$paths) {
+        if (!dir.create(path, showWarnings = FALSE)) {
+          self$release()
+          stop("Outra execução está usando a plataforma correspondente. Verifique o processo antes de remover a trava.",
+               call. = FALSE)
+        }
+        private$owned <- c(private$owned, path)
+        writeLines(as.character(Sys.getpid()), file.path(path, "pid"))
+      }
     },
     release = function() {
-      if (private$owned) unlink(private$path, recursive = TRUE)
-      private$owned <- FALSE
+      if (length(private$owned)) unlink(private$owned, recursive = TRUE)
+      private$owned <- character()
       invisible(TRUE)
     }
-  ), private = list(path = NULL, owned = FALSE),
+  ), private = list(paths = character(), owned = character()),
   lock_objects = TRUE, lock_class = TRUE, cloneable = FALSE)

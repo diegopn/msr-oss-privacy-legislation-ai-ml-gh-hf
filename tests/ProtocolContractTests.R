@@ -620,7 +620,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
     },
     collection_recovery = function() testthat::test_that("retomada reaproveita respostas válidas sem reutilizar falhas, buscas ou outro protocolo", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
-      manager <- DatabaseManager$new(fixture$config, fresh = TRUE)
+      manager <- DatabaseManager$new(fixture$config, platform = "github", fresh = TRUE)
       source <- AuditStore$new(manager$staging, fixture$config)
       source$start("github")
       urls <- paste0("https://api.github.com/repos/org/", c("valid", "invalid", "failed", "tampered", "missing"))
@@ -636,7 +636,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       source$finish("failed"); source$close()
       snapshot <- manager$preserve_failure()
       original_hash <- digest::digest(file = snapshot, algo = "sha256", serialize = FALSE)
-      recovered <- AuditStore$new(DatabaseManager$new(fixture$config, fresh = TRUE)$staging, fixture$config, recover = TRUE)
+      recovered <- AuditStore$new(DatabaseManager$new(fixture$config, platform = "github", fresh = TRUE)$staging, fixture$config, recover = TRUE)
       on.exit(recovered$close(), add = TRUE)
       recovered$start("github")
       calls <- character()
@@ -661,7 +661,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       different <- AuditStore$new(file.path(changed$root, "different.sqlite"), changed, recover = TRUE)
       on.exit(different$close(), add = TRUE); different$start("github")
       testthat::expect_null(different$replay(urls[[1L]]))
-      official <- AuditStore$new(fixture$config$path(fixture$config$settings$paths$database), fixture$config)
+      official <- AuditStore$new(fixture$config$database_path("github"), fixture$config)
       official$start("github"); official$finish(); official$close()
       # O snapshot antigo deve anteceder o banco de uma coleta concluída.
       Sys.setFileTime(snapshot, Sys.time() - 60)
@@ -671,7 +671,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
     }),
     hf_recovery = function() testthat::test_that("HF retoma metadados e cards e consulta Discussions novamente", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
-      manager <- DatabaseManager$new(fixture$config, fresh = TRUE)
+      manager <- DatabaseManager$new(fixture$config, platform = "huggingface", fresh = TRUE)
       source <- AuditStore$new(manager$staging, fixture$config)
       source$start("huggingface")
       api <- "https://huggingface.co/api/datasets/org/demo"
@@ -682,7 +682,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       discussion <- paste0(api, "/discussions/1")
       source$response(discussion, private$factory$response(list(events = list(), title = "old")), 1L)
       source$close(); manager$preserve_failure()
-      store <- AuditStore$new(DatabaseManager$new(fixture$config, fresh = TRUE)$staging, fixture$config, recover = TRUE)
+      store <- AuditStore$new(DatabaseManager$new(fixture$config, platform = "huggingface", fresh = TRUE)$staging, fixture$config, recover = TRUE)
       on.exit(store$close(), add = TRUE); store$start("huggingface")
       calls <- character()
       http <- private$factory$http(list(config = fixture$config, store = store), "huggingface", function(url, headers, timeout) {
@@ -918,10 +918,24 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
     }),
     storage = function() testthat::test_that("bancos oficiais são preservados até promoção explícita", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
-      target <- fixture$config$path(fixture$config$settings$paths$database)
-      dir.create(dirname(target), recursive = TRUE)
+      github <- DatabaseManager$new(fixture$config, platform = "github", fresh = TRUE)
+      huggingface <- DatabaseManager$new(fixture$config, platform = "huggingface", fresh = TRUE)
+      testthat::expect_false(identical(github$target, huggingface$target))
+      testthat::expect_match(github$target, "github\\.sqlite$")
+      testthat::expect_match(huggingface$target, "huggingface\\.sqlite$")
+      github_lock <- RunLock$new(fixture$config$root, platforms = "github")
+      huggingface_lock <- RunLock$new(fixture$config$root, platforms = "huggingface")
+      testthat::expect_true(dir.exists(fixture$config$path(".run-lock/github")))
+      testthat::expect_true(dir.exists(fixture$config$path(".run-lock/huggingface")))
+      testthat::expect_error(RunLock$new(fixture$config$root, platforms = "github"), "Outra execução")
+      github_lock$release()
+      testthat::expect_false(dir.exists(fixture$config$path(".run-lock/github")))
+      testthat::expect_true(dir.exists(fixture$config$path(".run-lock/huggingface")))
+      huggingface_lock$release()
+      testthat::expect_false(dir.exists(fixture$config$path(".run-lock/huggingface")))
+      target <- fixture$config$database_path("github")
       writeLines("old", target)
-      manager <- DatabaseManager$new(fixture$config)
+      manager <- DatabaseManager$new(fixture$config, platform = "github")
       writeLines("new", manager$staging)
       testthat::expect_identical(readLines(target), "old")
       manager$promote()
@@ -930,16 +944,17 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       pilot <- DatabaseManager$new(fixture$config, pilot = TRUE, fresh = TRUE)
       testthat::expect_false(identical(pilot$target, target))
       lock <- RunLock$new(fixture$config$root)
-      testthat::expect_true(file.exists(fixture$config$path(".run-lock/pid")))
+      testthat::expect_true(file.exists(fixture$config$path(".run-lock/github/pid")))
       testthat::expect_error(RunLock$new(fixture$config$root), "Outra execução")
       lock$release()
     }),
     pilot_retention = function() testthat::test_that("piloto substitui somente seus dados e limpa também tentativas falhas", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
       config <- fixture$config
-      config$settings$paths <- list(database = "inputs/data/research.sqlite", pilot_database = "inputs/data/pilot/pilot.sqlite",
+      config$settings$paths <- list(github_database = "inputs/data/github.sqlite", huggingface_database = "inputs/data/huggingface.sqlite",
+        pilot_database = "inputs/data/pilot/pilot.sqlite",
         raw = "inputs/raw", archive = "inputs/data/archive", analysis = "inputs/final/collection")
-      official <- c("inputs/data/research.sqlite", "inputs/data/archive/previous.sqlite",
+      official <- c("inputs/data/github.sqlite", "inputs/data/huggingface.sqlite", "inputs/data/archive/previous.sqlite",
         "inputs/raw/official/response.body", "inputs/final/coding-reviewed.csv")
       pilot_files <- c("inputs/data/pilot/pilot.sqlite", "inputs/data/pilot/summary.json",
         "inputs/data/pilot/.staging-old-failed.sqlite", "inputs/raw/pilot/old/response.body")
@@ -977,13 +992,13 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_identical(list.files(pilot_data, all.files = TRUE, no.. = TRUE), "pilot.sqlite")
       testthat::expect_identical(vapply(official, function(path) digest::digest(file = config$path(path), algo = "sha256", serialize = FALSE), ""), official_hashes)
       testthat::expect_identical(list.files(config$path("inputs/data/archive")), "previous.sqlite")
-      config$settings$paths$pilot_database <- config$settings$paths$database
+      config$settings$paths$pilot_database <- config$settings$paths$github_database
       testthat::expect_error(DatabaseManager$new(config, pilot = TRUE), "pilot")
       config$settings$paths$pilot_database <- "inputs/data/pilot/pilot.sqlite"
-      config$settings$paths$database <- "inputs/data/pilot/official.sqlite"
+      config$settings$paths$github_database <- "inputs/data/pilot/official.sqlite"
       testthat::expect_error(DatabaseManager$new(config, pilot = TRUE), "oficiais")
       testthat::expect_identical(readLines(latest$target), "latest")
-      config$settings$paths$database <- "inputs/data/research.sqlite"
+      config$settings$paths$github_database <- "inputs/data/github.sqlite"
       outside <- tempfile("privacy-outside-")
       dir.create(file.path(outside, "pilot"), recursive = TRUE)
       on.exit(unlink(outside, recursive = TRUE), add = TRUE)
@@ -1080,33 +1095,35 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       summary_text <- paste(readLines(fixture$config$path("site/summary.json"), warn = FALSE), collapse = "\n")
       testthat::expect_false(grepl("legal_discussions|models|datasets", summary_text, perl = TRUE))
 
-      db_path <- fixture$config$path("inputs/data/research.sqlite")
-      dir.create(dirname(db_path), recursive = TRUE)
-      store <- AuditStore$new(db_path, fixture$config)
+      db_paths <- list(github = fixture$config$database_path("github"),
+        huggingface = fixture$config$database_path("huggingface"))
+      dir.create(dirname(db_paths$github), recursive = TRUE, showWarnings = FALSE)
+      store <- AuditStore$new(db_paths$github, fixture$config)
       journal <- CollectionJournal$new(fixture$config)
       store$start("github", pilot = FALSE); store$finish("completed")
       journal$record("github", store$run_id, "completed", fixture$config)
-      incomplete_run <- store$run_id
+      github_run_id <- store$run_id
       store$close()
-      testthat::expect_error(source$lock_official(db_path, complete_run = TRUE), "huggingface")
+      testthat::expect_error(source$lock_official(db_paths, complete_run = TRUE), "huggingface")
       testthat::expect_identical(source$select()$source, "pilot")
 
-      store <- AuditStore$new(db_path, fixture$config)
+      store <- AuditStore$new(db_paths$huggingface, fixture$config)
       store$start("huggingface", pilot = FALSE); store$finish("completed")
       journal$record("huggingface", store$run_id, "completed", fixture$config)
       store$close()
-      source$lock_official(db_path, complete_run = TRUE)
+      source$lock_official(db_paths, complete_run = TRUE)
       selected <- source$select()
       testthat::expect_identical(selected$source, "official")
-      testthat::expect_true(file.exists(selected$path))
-      official_path <- selected$path
+      testthat::expect_identical(names(selected$record$snapshots), c("github", "huggingface"))
+      testthat::expect_true(all(file.exists(unlist(selected$paths))))
+      official_paths <- selected$paths
       failed_path <- fixture$config$path("inputs/data/later-partial.sqlite")
       failed_store <- AuditStore$new(failed_path, fixture$config)
-      failed_store$start("github"); failed_store$finish("completed")
-      journal$record("github", failed_store$run_id, "completed", fixture$config)
+      failed_store$start("huggingface"); failed_store$finish("completed")
+      journal$record("huggingface", failed_store$run_id, "completed", fixture$config)
       failed_store$close()
-      testthat::expect_error(source$lock_official(failed_path, complete_run = TRUE), "huggingface")
-      testthat::expect_identical(source$select()$path, official_path)
+      testthat::expect_error(source$lock_official(db_paths, complete_run = TRUE), "huggingface")
+      testthat::expect_identical(source$select()$paths, official_paths)
       before <- readBin(pilot_path, "raw", n = file.info(pilot_path)$size)
       pilot$collected$finished <- "2026-10-20T00:00:00Z"
       testthat::expect_false(source$update_pilot(pilot))
@@ -1114,16 +1131,16 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_identical(readBin(pilot_path, "raw", n = file.info(pilot_path)$size), before)
       state_bytes <- readBin(marker, "raw", n = file.info(marker)$size)
       state <- ProtocolTools$new()$decode(rawToChar(state_bytes))
-      state$source <- "pilot"; state$official_locked <- FALSE
+      state$schema_version <- 1L; state$source <- "pilot"; state$official_locked <- FALSE
       writeLines(ProtocolTools$new()$json(state), marker)
       testthat::expect_error(source$select(), "retorno ao piloto")
       writeBin(state_bytes, marker)
 
-      testthat::expect_true(file.remove(official_path))
-      testthat::expect_error(source$select(), "snapshot oficial")
+      testthat::expect_true(all(file.remove(unlist(official_paths, use.names = FALSE))))
+      testthat::expect_error(source$select(), "não retornará ao piloto")
       marker_data <- ProtocolTools$new()$decode(paste(readLines(marker), collapse = "\n"))
       testthat::expect_true(isTRUE(marker_data$official_locked))
-      testthat::expect_identical(marker_data$official$run_ids$github, incomplete_run)
+      testthat::expect_identical(marker_data$official$run_ids$github, github_run_id)
     }),
     unavailability = function() testthat::test_that("Discussions desativadas ficam separadas de falhas HTTP", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
@@ -1269,14 +1286,16 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_error(app$run("--no-site"), "Opção inválida")
       testthat::expect_error(app$run("--analyze"), "ausente")
       app$run("--huggingface")
-      testthat::expect_true(file.exists(file.path(root, "outputs/metadata/site-failure.txt")))
+      testthat::expect_false(file.exists(file.path(root, "outputs/metadata/site-failure.txt")))
       app$run("--github")
       config <- ProjectConfig$new(root)
-      path <- config$path(config$settings$paths$database)
-      store <- AuditStore$new(path, config)
-      testthat::expect_equal(sum(store$counts()$legal_discussions$n), 5L)
-      store$close()
-      unlink(file.path(root, "outputs/metadata/site-failure.txt"))
+      paths <- list(github = config$database_path("github"), huggingface = config$database_path("huggingface"))
+      gh_store <- AuditStore$new(paths$github, config)
+      hf_store <- AuditStore$new(paths$huggingface, config)
+      testthat::expect_equal(sum(hf_store$counts()$legal_discussions$n), 4L)
+      stores <- PlatformStores$new(list(github = gh_store, huggingface = hf_store))
+      testthat::expect_equal(sum(stores$counts()$legal_discussions$n), 5L)
+      stores$close()
       app$run("--analyze")
       testthat::expect_true(file.exists(file.path(root, "outputs/metadata/site-failure.txt")))
       coding_input <- file.path(root, "inputs/final/coding-reviewed.csv")
@@ -1289,13 +1308,15 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       analysis_path <- config$path(config$settings$paths$analysis)
       testthat::expect_identical(digest::digest(file = file.path(analysis_path, "independent-input.csv"), algo = "sha256", serialize = FALSE), coding_hash)
       testthat::expect_identical(digest::digest(file = file.path(analysis_path, "consensus-input.csv"), algo = "sha256", serialize = FALSE), consensus_hash)
+      path <- paths$github
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- TRUE
       partial <- capture.output(app$run("--github"))
       testthat::expect_true(any(grepl("diagnósticos registrados", partial)))
       testthat::expect_false(identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash))
       testthat::expect_error(capture.output(app$run("--analyze")), "Unidade fora da amostra")
-      testthat::expect_false(dir.exists(file.path(root, ".run-lock")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/github")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/huggingface")))
       unlink(c(coding_input, consensus_input))
       failure <- FALSE
       app$run("--github")
@@ -1311,8 +1332,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       gap_run <- gap_store$query("SELECT run_id,status FROM runs WHERE platform='github' AND pilot=0 ORDER BY rowid DESC LIMIT 1")
       testthat::expect_identical(gap_run$status, "completed")
       testthat::expect_equal(gap_store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND code='search_empty_second' AND resolved=0", list(gap_run$run_id))$n, 1L)
-      testthat::expect_silent(AnalysisGate$new(config, gap_store)$verify())
-      gap_store$close()
+      gap_hf_store <- AuditStore$new(paths$huggingface, config)
+      testthat::expect_silent(AnalysisGate$new(config, list(github = gap_store,
+        huggingface = gap_hf_store))$verify())
+      gap_store$close(); gap_hf_store$close()
       testthat::expect_true(file.exists(config$path("inputs/final/collection/coding.csv")))
       testthat::expect_equal(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 18L)
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
@@ -1321,7 +1344,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(any(grepl("diagnósticos registrados", partial)))
       testthat::expect_false(identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash))
       testthat::expect_gt(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 0L)
-      testthat::expect_false(dir.exists(file.path(root, ".run-lock")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/github")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/huggingface")))
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- FALSE
       unlink(file.path(root, "outputs/metadata/site-failure.txt"))
@@ -1332,7 +1356,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(file.exists(config$path(config$settings$paths$pilot_database)))
       testthat::expect_true(file.exists(config$path("inputs/data/pilot/summary.json")))
       testthat::expect_identical(sort(jsonlite::fromJSON(config$path("inputs/data/pilot/summary.json"))$runs$platform), c("github", "huggingface"))
-      testthat::expect_true(file.exists(config$path("inputs/data/latest-collections.json")))
+      testthat::expect_true(file.exists(config$path("inputs/data/latest-collection-github.json")))
+      testthat::expect_true(file.exists(config$path("inputs/data/latest-collection-huggingface.json")))
       testthat::expect_identical(list.dirs(file.path(root, "outputs"), recursive = FALSE, full.names = FALSE), c("metadata", "reports", "tables"))
       testthat::expect_identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash)
     }),
@@ -1468,7 +1493,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         paste(readLines(site_failure, warn = FALSE), collapse = "\n") else "")
       testthat::expect_true(file.exists(file.path(root, "_site/index.html")))
       testthat::expect_equal(nrow(utils::read.csv(file.path(root, "inputs/final/collection/sample.csv"))), 18L)
-      testthat::expect_false(dir.exists(file.path(root, ".run-lock")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/github")))
+      testthat::expect_false(dir.exists(file.path(root, ".run-lock/huggingface")))
     }),
     structure = function() testthat::test_that("uma classe por arquivo, objetos bloqueados e complexidade limitada", {
       files <- list.files(private$config$path("src"), "\\.R$", recursive = TRUE, full.names = TRUE)
@@ -1494,6 +1520,6 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         }
       }
       tools <- ProtocolTools$new()
-      testthat::expect_error(tools$surprise <- 1, "locked")
+      testthat::expect_error(tools$surprise <- 1)
     })
   ), lock_objects = TRUE, lock_class = TRUE, cloneable = FALSE)

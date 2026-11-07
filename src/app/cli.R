@@ -30,14 +30,15 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
     begin = function(mode) {
       labels <- c(run = "Execução completa | GitHub + Hugging Face", pilot = "Piloto limitado | GitHub + Hugging Face",
         github = "Coleta GitHub", huggingface = "Coleta Hugging Face", analyze = "Preparação dos dados e amostra")
-      steps <- c(run = 4L, pilot = 2L, github = 2L, huggingface = 2L, analyze = 2L)
+      steps <- c(run = 4L, pilot = 2L, github = 1L, huggingface = 1L, analyze = 2L)
       private$site_failed <- FALSE
       private$progress$begin(paste0(labels[[mode]], " | corte: ", private$config$settings$protocol$cutoff),
         steps[[mode]], private$started)
       private$progress$activity("Verificando configuração e referências")
     },
     execute = function(options) {
-      lock <- RunLock$new(private$root)
+      platforms <- if (options$mode %in% c("github", "huggingface")) options$mode else c("github", "huggingface")
+      lock <- RunLock$new(private$root, platforms = platforms)
       on.exit(lock$release(), add = TRUE)
       if (options$mode == "analyze") return(private$analyze(options))
       private$collect(options)
@@ -58,55 +59,116 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
         "Modalidades: --pilot | --run | --github | --huggingface | --analyze",
         "Ajuda: --help ou -h",
         "Sem argumentos: ajuda. Nunca inicia uma coleta por acidente.",
-        "O piloto não gera o site; coletas e análise geram o site ao concluir.",
+        "--github e --huggingface podem rodar ao mesmo tempo; cada coleta usa seu próprio banco.",
+        "Use --analyze após as duas coletas para consultar os dois bancos e gerar o site.",
+        "--run coleta as duas plataformas, analisa e gera o site em uma única execução.",
+        "O piloto usa um banco separado e não gera o site.",
         "Arquivos preenchidos de revisão são lidos de caminhos fixos em inputs/final/.",
         "O piloto substitui seus dados anteriores; coletas completas preservam histórico.",
         "Publicação é manual; nenhuma execução faz commit, push ou deploy."), collapse = "\n"), "\n")
     },
     analyze = function(options) {
-      path <- private$config$path(private$config$settings$paths$database)
-      if (!file.exists(path)) stop("Banco científico ausente. Execute as duas coletas primeiro.")
-      store <- AuditStore$new(path, private$config)
-      on.exit(store$close(), add = TRUE)
+      paths <- list(github = private$config$database_path("github"),
+        huggingface = private$config$database_path("huggingface"))
+      for (platform in names(paths)) if (!file.exists(paths[[platform]])) {
+        stop("Banco científico de ", platform, " ausente. Execute as duas coletas primeiro.", call. = FALSE)
+      }
+      stores <- PlatformStores$new(lapply(paths, AuditStore$new, config = private$config, readonly = TRUE))
+      on.exit(stores$close(), add = TRUE)
       private$progress$stage("Preparação dos CSVs e amostra")
       private$progress$activity("Verificando coletas e preparando a amostra")
-      result <- AnalysisExporter$new(private$config, store)$run(private$review_file("coding_reviewed"),
+      result <- AnalysisExporter$new(private$config, stores)$run(private$review_file("coding_reviewed"),
         private$review_file("consensus_reviewed"))
       private$progress$event(paste("CSVs e amostra preparados em:", result$path))
+      stores$close()
+      private$record_site_source(paths)
       private$site()
       invisible(result)
     },
     collect = function(options) {
-      pilot <- options$mode == "pilot"
-      complete <- options$mode == "run"
-      if (complete) private$config$require_references()
-      platforms <- if (pilot || complete) c("github", "huggingface") else options$mode
-      manager <- DatabaseManager$new(private$config, pilot, fresh = pilot || complete)
-      store <- AuditStore$new(manager$staging, private$config, recover = !pilot)
+      if (options$mode == "pilot") return(private$collect_pilot())
+      if (options$mode == "run") return(private$collect_complete())
+      private$collect_platform_only(options$mode)
+    },
+    collect_pilot = function() {
+      manager <- DatabaseManager$new(private$config, pilot = TRUE, fresh = TRUE)
+      store <- AuditStore$new(manager$staging, private$config)
       succeeded <- FALSE
       on.exit({
         store$close()
         if (!succeeded) manager$preserve_failure()
       }, add = TRUE)
-      for (platform in platforms) private$platform(platform, store, pilot)
-      if (complete) {
-        private$progress$stage("Preparação dos CSVs e amostra")
-        private$progress$activity("Verificando coletas e preparando a amostra")
-        result <- AnalysisExporter$new(private$config, store)$run(private$review_file("coding_reviewed"),
-          private$review_file("consensus_reviewed"))
-        private$progress$event(paste("CSVs e amostra preparados em:", result$path))
-      }
-      if (pilot) private$pilot_report(store)
+      private$collect_platforms(c("github", "huggingface"), store, TRUE)
+      private$pilot_report(store)
       store$close()
       manager$promote()
       succeeded <- TRUE
-      private$progress$event(paste(if (pilot) "Banco do piloto:" else "Banco científico:", manager$target))
-      if (complete) private$record_site_source(manager$target)
-      if (!pilot) private$site()
+      private$progress$event(paste("Banco do piloto:", manager$target))
       invisible(manager$target)
     },
-    record_site_source = function(database_path) {
-      transition <- SiteDataSource$new(private$config)$lock_official(database_path, complete_run = TRUE)
+    collect_platform_only = function(platform) {
+      manager <- DatabaseManager$new(private$config, platform = platform, fresh = FALSE)
+      store <- AuditStore$new(manager$staging, private$config, recover = TRUE)
+      succeeded <- FALSE
+      on.exit({
+        store$close()
+        if (!succeeded) manager$preserve_failure()
+      }, add = TRUE)
+      private$platform(platform, store, FALSE)
+      store$close()
+      manager$promote()
+      succeeded <- TRUE
+      private$progress$event(paste("Banco da coleta", platform, ":", manager$target))
+      invisible(manager$target)
+    },
+    collect_complete = function() {
+      private$config$require_references()
+      platforms <- c("github", "huggingface")
+      managers <- setNames(lapply(platforms, function(platform) {
+        DatabaseManager$new(private$config, platform = platform, fresh = TRUE)
+      }), platforms)
+      stores_list <- lapply(managers, function(manager) AuditStore$new(manager$staging, private$config, recover = TRUE))
+      stores <- PlatformStores$new(stores_list)
+      promoted <- character()
+      succeeded <- FALSE
+      on.exit({
+        stores$close()
+        if (!succeeded) {
+          for (platform in rev(promoted)) managers[[platform]]$rollback_promotion()
+          for (manager in managers) manager$preserve_failure()
+        }
+      }, add = TRUE)
+      private$collect_platforms(platforms, stores, FALSE)
+      private$prepare_analysis(stores)
+      stores$close()
+      for (platform in platforms) {
+        managers[[platform]]$promote()
+        promoted <- c(promoted, platform)
+      }
+      succeeded <- TRUE
+      paths <- lapply(managers, function(manager) manager$target)
+      private$progress$event(paste("Bancos científicos:", paste(paste(names(paths), unlist(paths), sep = "="), collapse = " | ")))
+      private$record_site_source(paths)
+      private$site()
+      invisible(paths)
+    },
+    collect_platforms = function(platforms, stores, pilot) {
+      for (platform in platforms) {
+        store <- if (inherits(stores, "PlatformStores")) stores$for_platform(platform) else stores
+        private$platform(platform, store, pilot)
+      }
+      invisible(TRUE)
+    },
+    prepare_analysis = function(stores) {
+      private$progress$stage("Preparação dos CSVs e amostra")
+      private$progress$activity("Verificando coletas e preparando a amostra")
+      result <- AnalysisExporter$new(private$config, stores)$run(private$review_file("coding_reviewed"),
+        private$review_file("consensus_reviewed"))
+      private$progress$event(paste("CSVs e amostra preparados em:", result$path))
+      invisible(result)
+    },
+    record_site_source = function(database_paths) {
+      transition <- SiteDataSource$new(private$config)$lock_official(database_paths, complete_run = TRUE)
       if (isTRUE(transition$locked)) return(invisible(transition))
       retained <- if (identical(transition$source, "official"))
         "O último snapshot oficial válido será mantido." else "O resumo preliminar do piloto será mantido."
