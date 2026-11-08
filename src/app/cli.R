@@ -209,7 +209,8 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       if (!pilot) journal$record(platform, store$run_id, status, private$config)
       problems <- private$problem_counts(store, platform, store$run_id)
       if (status != "completed") {
-        stop("Coleta ", platform, " com problemas pendentes; banco oficial preservado.")
+        stop("Coleta ", label, " incompleta: ", problems$pending + problems$gaps,
+          " diagnósticos sem verificação; banco oficial anterior preservado.")
       }
       unverified <- problems$pending + problems$gaps
       label_status <- if (problems$pending > 0L) paste0("concluída | ", unverified,

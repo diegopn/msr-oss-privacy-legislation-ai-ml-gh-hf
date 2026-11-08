@@ -42,6 +42,11 @@ AnalysisGate <- R6::R6Class("AnalysisGate",
       if (is.null(journal) || journal$status != "completed" || journal$run_id != runs$run_id) {
         stop("A última tentativa de coleta não foi concluída: ", platform, call. = FALSE)
       }
+      if (platform == "github") {
+        unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND resolved=0",
+          list(runs$run_id))$n[[1L]]
+        if (unresolved > 0L) stop("Coleta GitHub incompleta: há lacunas de cobertura não verificadas.", call. = FALSE)
+      }
       private$verify_responses(store, runs$run_id)
     },
     verify_protocol = function(runs, platform) {

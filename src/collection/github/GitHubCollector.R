@@ -28,7 +28,11 @@ GitHubCollector <- R6::R6Class("GitHubCollector",
           private$progress$report(paste("Busca", term, "concluída; resultados examinados:", received), counts = FALSE)
         }
       }
-      private$store$finish()
+      unresolved <- private$store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND resolved=0",
+        list(private$store$run_id))$n[[1L]]
+      status <- if (!private$pilot && unresolved > 0L) "incomplete" else "completed"
+      private$store$finish(status)
+      invisible(status)
     }
   ),
   private = list(
@@ -38,6 +42,7 @@ GitHubCollector <- R6::R6Class("GitHubCollector",
       id <- sub("^https://api.github.com/repos/", "", item$repository_url)
       if (exists(id, private$repos, inherits = FALSE)) return(private$repos[[id]])
       repo <- private$client$repository(id)
+      if (is.null(repo)) return(NULL)
       decision <- private$policy$assess(repo, repo$ai)
       repo$status <- decision$status
       repo$reason <- decision$reason
@@ -100,7 +105,7 @@ GitHubCollector <- R6::R6Class("GitHubCollector",
         excluded <- private$mention_after_cutoff(main, comments)
         code <- if (excluded) "search_hit_after_cutoff" else "unconfirmed_search_hit"
         detail <- if (excluded) "Menção apenas em comentário posterior ao corte; excluída do recorte" else "Menção não confirmada dentro do período"
-        private$store$problem(code, main$url, detail, resolved = excluded)
+        private$store$problem(code, main$url, detail, resolved = TRUE)
       }
       if (!complete && private$pilot) private$store$problem("pilot_comment_limit", main$url,
                                                           "Comentários limitados pelo piloto", TRUE)

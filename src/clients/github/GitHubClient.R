@@ -14,6 +14,7 @@ GitHubClient <- R6::R6Class("GitHubClient",
       url <- paste0("https://api.github.com/repos/", identifier)
       response <- private$http$get(url, optional = TRUE)
       if (is.null(response)) {
+        if (!is.null(private$http$last_failure(url))) return(NULL)
         private$store$unavailable(identifier, "repository_unavailable")
         return(private$record(identifier, list(), list(status = "excluded", evidence = list()), FALSE))
       }
@@ -25,6 +26,7 @@ GitHubClient <- R6::R6Class("GitHubClient",
       preliminary <- private$record(identifier, metadata, list(status = "candidate", evidence = list()), TRUE)
       if (private$policy$assess(preliminary, preliminary$ai)$status == "excluded") return(preliminary)
       files <- private$files(url, metadata)
+      if (!isTRUE(files$complete)) return(NULL)
       ai <- private$ai$github(metadata, files$manifests, files$readme)
       private$record(identifier, metadata, ai, TRUE)
     },
@@ -46,37 +48,53 @@ GitHubClient <- R6::R6Class("GitHubClient",
     files = function(url, metadata) {
       preliminary <- private$ai$github(metadata)
       needs_readme <- !length(preliminary$evidence$discovery)
-      response <- private$http$get(paste0(url, "/contents"), optional = TRUE)
-      if (is.null(response)) return(list(manifests = list(), readme = ""))
+      contents_url <- paste0(url, "/contents")
+      response <- private$http$get(contents_url, optional = TRUE)
+      if (is.null(response)) return(list(manifests = list(), readme = "",
+        complete = is.null(private$http$last_failure(contents_url))))
       entries <- response$data
       if (!is.list(entries)) {
         private$store$problem("invalid_repository_files", url, "Listagem de arquivos não é uma lista JSON")
-        return(list(manifests = list(), readme = ""))
+        return(list(manifests = list(), readme = "", complete = FALSE))
       }
       names <- vapply(entries, function(entry) private$tools$scalar(entry$name), "")
       desired <- private$config$settings$ai$manifests
       chosen <- which(names %in% desired)
       manifests <- list()
-      for (index in chosen) manifests[[names[[index]]]] <- private$content(entries[[index]]$url)
+      complete <- TRUE
+      for (index in chosen) {
+        content <- private$content(entries[[index]]$url)
+        if (is.null(content)) {
+          complete <- FALSE
+          next
+        }
+        manifests[[names[[index]]]] <- content
+      }
       readme <- ""
       if (needs_readme) {
         readmes <- which(grepl("^readme(\\.(md|rst|txt|markdown))?$", names, ignore.case = TRUE))
-        if (length(readmes)) readme <- private$content(entries[[readmes[[1L]]]]$url)
+        if (length(readmes)) {
+          content <- private$content(entries[[readmes[[1L]]]]$url)
+          if (is.null(content)) complete <- FALSE else readme <- content
+        }
       }
-      list(manifests = manifests, readme = readme)
+      list(manifests = manifests, readme = readme, complete = complete)
     },
     content = function(url) {
       response <- private$http$get(url, optional = TRUE)
-      if (is.null(response)) return("")
+      if (is.null(response)) {
+        if (!is.null(private$http$last_failure(url))) return(NULL)
+        return("")
+      }
       data <- response$data
       if (!is.list(data) || !identical(data$encoding, "base64") || is.null(data$content)) {
         private$store$problem("content_unreadable", url, "Arquivo sem conteúdo base64 completo")
-        return("")
+        return(NULL)
       }
       tryCatch(rawToChar(jsonlite::base64_dec(gsub("\\s", "", data$content, perl = TRUE))),
         error = function(error) {
           private$store$problem("content_unreadable", url, conditionMessage(error))
-          ""
+          NULL
         })
     }
   ), lock_objects = TRUE, lock_class = TRUE, cloneable = FALSE)

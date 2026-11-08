@@ -13,6 +13,7 @@ HttpClient <- R6::R6Class("HttpClient",
       self$progress <- if (is.null(progress)) ConsoleProgress$new(enabled = FALSE) else progress
     },
     get = function(url, bucket = "api", optional = FALSE) {
+      private$failure_state <- NULL
       if (!private$validate_url(url)) return(NULL)
       if (bucket %in% c("api", "resolvers") && !grepl("/(search|issues|discussions)(/|\\?)", url)) {
         cached <- private$store$replay(url)
@@ -26,15 +27,24 @@ HttpClient <- R6::R6Class("HttpClient",
         }
       }
       outcome <- private$retry_get(url, bucket, optional)
-      if (outcome$done) return(outcome$value)
+      if (outcome$done) {
+        private$failure_state <- outcome$failure
+        return(outcome$value)
+      }
       result <- outcome$result
       private$store$problem("http_failure", url, paste("HTTP", result$status))
+      private$failure_state <- list(url = url, status = result$status, code = "http_failure")
       NULL
+    },
+    last_failure = function(url) {
+      failure <- private$failure_state
+      if (is.null(failure) || !identical(failure$url, url)) return(NULL)
+      failure
     }
   ),
   private = list(
     platform = NULL, config = NULL, store = NULL, transport = NULL, clock = NULL,
-    sleep = NULL, token = NULL, last = NULL, quota_started = NULL,
+    sleep = NULL, token = NULL, last = NULL, failure_state = NULL, quota_started = NULL,
     retry_get = function(url, bucket, optional) {
       failures <- 0L
       quota_retries <- 0L
@@ -47,9 +57,10 @@ HttpClient <- R6::R6Class("HttpClient",
         result <- private$request(url, attempts)
         if (private$is_quota(result)) {
           quota_retries <- quota_retries + 1L
-          if (!private$quota_wait(result, quota_retries)) return(list(done = TRUE, value = NULL))
+          if (!private$quota_wait(result, quota_retries, url)) return(list(done = TRUE, value = NULL))
           next
         }
+        if (private$platform == "github") private$quota_started <- NULL
         ready <- private$ready(result, url, optional)
         if (ready$done) return(ready)
         if (!result$status %in% c(0L, 408L, 425L, 500L, 502L, 503L, 504L)) break
@@ -68,7 +79,11 @@ HttpClient <- R6::R6Class("HttpClient",
       failures < private$config$attempts && private$clock() - started + delay <= private$config$retry_budget
     },
     ready = function(result, url, optional) {
-      if (result$status >= 200L && result$status < 300L) return(list(done = TRUE, value = private$decode(result, url)))
+      if (result$status >= 200L && result$status < 300L) {
+        value <- private$decode(result, url)
+        failure <- if (is.null(value)) list(url = url, status = result$status, code = "invalid_response") else NULL
+        return(list(done = TRUE, value = value, failure = failure))
+      }
       if (private$unavailable(result, optional)) return(list(done = TRUE, value = NULL))
       list(done = FALSE)
     },
@@ -143,13 +158,21 @@ HttpClient <- R6::R6Class("HttpClient",
         }
         text <- rawToChar(body)
       } else text <- body
-      data <- if (grepl("json", content_type, fixed = TRUE)) {
-             tryCatch(jsonlite::fromJSON(text, simplifyVector = FALSE), error = function(e) {
-               private$store$problem("invalid_json", url, conditionMessage(e))
-               NULL
-             })
-           } else NULL
-      if (grepl("json", content_type, fixed = TRUE) && is.null(data)) return(NULL)
+      is_json <- grepl("json", content_type, fixed = TRUE)
+      parse_failed <- FALSE
+      data <- if (is_json) {
+        tryCatch(jsonlite::fromJSON(text, simplifyVector = FALSE), error = function(e) {
+          parse_failed <<- TRUE
+          private$store$problem("invalid_json", url, conditionMessage(e))
+          NULL
+        })
+      } else NULL
+      if (is_json && is.null(data)) {
+        if (!parse_failed && private$platform == "github") {
+          private$store$problem("invalid_response", url, "Resposta JSON nula")
+        }
+        return(NULL)
+      }
       list(text = text, headers = result$headers, status = result$status, data = data)
     },
     is_quota = function(result) {
@@ -160,7 +183,7 @@ HttpClient <- R6::R6Class("HttpClient",
       identical(headers[["x-ratelimit-remaining"]], "0") ||
         !is.null(headers[["retry-after"]]) || grepl("rate limit", body, ignore.case = TRUE)
     },
-    quota_wait = function(result, retries) {
+    quota_wait = function(result, retries, url) {
       now <- private$clock()
       if (is.null(private$quota_started)) private$quota_started <- now
       github <- private$platform == "github"
@@ -168,7 +191,8 @@ HttpClient <- R6::R6Class("HttpClient",
       delay <- private$reset_delay(result$headers, retries)
       exhausted <- !github && retries > private$config$hf_quota_retries
       if (exhausted || now - private$quota_started + delay > budget) {
-        private$store$problem("quota_budget", private$platform, "Orçamento de espera esgotado")
+        private$store$problem("quota_budget", if (github) url else private$platform, "Orçamento de espera esgotado")
+        if (github) stop("Cota do GitHub não renovada dentro do limite de espera; coleta interrompida sem promover o banco parcial.", call. = FALSE)
         return(FALSE)
       }
       self$progress$event(paste0(private$platform, ": Aguardando renovação da cota por ",
