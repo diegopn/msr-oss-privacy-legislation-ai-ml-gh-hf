@@ -40,21 +40,26 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
     },
     process_items = function(items, progress, type, maximum) {
       for (item in items) {
-          id <- private$tools$scalar(item$id, private$tools$scalar(item$modelId))
-          if (!nzchar(id)) {
-            private$store$problem("invalid_repository_response", "Hugging Face discovery",
-              "Projeto sem identificador; item descartado")
-            next
-          }
-          if (exists(id, progress$seen, inherits = FALSE)) next
-          if (progress$discovered >= maximum) break
-          progress$seen[[id]] <- TRUE
-          progress$discovered <- progress$discovered + 1L
-          repo <- private$repository(type, item)
-          if (is.null(repo) || repo$status != "eligible") next
-          if (progress$processed >= private$config$limit("hf_eligible_per_type", private$pilot)) next
-          private$discussions(repo)
-          progress$processed <- progress$processed + 1L
+        if (progress$discovered >= maximum) break
+        progress <- private$process_item(item, progress, type)
+      }
+      progress
+    },
+    process_item = function(item, progress, type) {
+      id <- private$tools$scalar(item$id, private$tools$scalar(item$modelId))
+      if (!nzchar(id)) {
+        private$store$problem("invalid_repository_response", "Hugging Face discovery",
+          "Projeto sem identificador; item descartado")
+        return(progress)
+      }
+      if (exists(id, progress$seen, inherits = FALSE)) return(progress)
+      progress$seen[[id]] <- TRUE
+      progress$discovered <- progress$discovered + 1L
+      repo <- private$repository(type, item)
+      if (is.null(repo) || repo$status != "eligible") return(progress)
+      eligible_limit <- private$config$limit("hf_eligible_per_type", private$pilot)
+      if (progress$processed < eligible_limit && private$discussions(repo)) {
+        progress$processed <- progress$processed + 1L
       }
       progress
     },
@@ -74,8 +79,18 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
         private$policy$bot(item$author, "huggingface"), !private$time$eligible(item$createdAt)))
     },
     discussions = function(repo) {
+      problems_before <- private$store$problem_count()
       discussions <- private$client$discussions(repo,
         private$config$limit("hf_discussions_per_repo", private$pilot))
+      if (is.null(discussions)) {
+        if (private$store$problem_count() == problems_before) {
+          repo$status <- "excluded"
+          repo$reason <- "discussions_unavailable"
+          private$store$repository(repo)
+          return(FALSE)
+        }
+        return(TRUE)
+      }
       seen <- character()
       for (item in discussions) {
         if (private$excluded_discussion(item)) next
@@ -85,6 +100,7 @@ HuggingFaceCollector <- R6::R6Class("HuggingFaceCollector",
         if (is.null(discussion) || private$excluded_discussion(discussion)) next
         private$discussion(repo, discussion)
       }
+      TRUE
     },
     discussion = function(repo, item) {
       if (!private$time$eligible(item$createdAt)) return(invisible(NULL))

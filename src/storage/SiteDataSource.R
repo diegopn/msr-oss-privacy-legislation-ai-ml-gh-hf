@@ -125,7 +125,14 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
       if (nrow(rows) != 1L) stop("Coleta oficial ausente: ", platform, call. = FALSE)
       unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE resolved=0 AND run_id=?",
         list(rows$run_id[[1L]]))$n[[1L]]
-      if (unresolved > 0L) return(NULL)
+      if (unresolved > 0L) {
+        if (platform != "github") return(NULL)
+        valid <- tryCatch({
+          AnalysisGate$new(private$config, stores)$verify_recovery(platform, rows$run_id[[1L]])
+          TRUE
+        }, error = function(error) FALSE)
+        if (!valid) return(NULL)
+      }
       rows
     },
     retain_previous_source = function(platform) {

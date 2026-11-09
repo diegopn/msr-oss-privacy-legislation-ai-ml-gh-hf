@@ -4,6 +4,7 @@ GitHubSearch <- R6::R6Class("GitHubSearch",
       private$http <- http
       private$config <- config
       private$store <- store
+      private$tools <- ProtocolTools$new()
       private$time <- TimePolicy$new(config$settings$protocol$cutoff)
       private$pagination <- Pagination$new(http, store)
     },
@@ -14,10 +15,21 @@ GitHubSearch <- R6::R6Class("GitHubSearch",
       private$window(paste(private$terms, collapse = " / "), private$time$parse(start), private$time$end - 1,
                      consumer, limit)
       invisible(private$count)
+    },
+    recover = function(payload, consumer, limit = Inf) {
+      private$terms <- as.character(unlist(payload$terms, use.names = FALSE))
+      private$count <- 0L
+      private$seen <- new.env(parent = emptyenv())
+      from <- as.POSIXct(as.numeric(unlist(payload$from, use.names = FALSE)[[1L]]),
+        origin = "1970-01-01", tz = "UTC")
+      to <- as.POSIXct(as.numeric(unlist(payload$to, use.names = FALSE)[[1L]]),
+        origin = "1970-01-01", tz = "UTC")
+      private$window(paste(private$terms, collapse = " / "), from, to, consumer, limit)
+      invisible(private$count)
     }
   ),
   private = list(
-    http = NULL, config = NULL, store = NULL, time = NULL, pagination = NULL, count = 0L, terms = NULL, seen = NULL,
+    http = NULL, config = NULL, store = NULL, tools = NULL, time = NULL, pagination = NULL, count = 0L, terms = NULL, seen = NULL,
     url = function(from, to, page) {
       phrase <- paste0('"', private$terms, '"', collapse = " OR ")
       if (length(private$terms) > 1L) phrase <- paste0("(", phrase, ")")
@@ -28,6 +40,13 @@ GitHubSearch <- R6::R6Class("GitHubSearch",
              "&page=", page)
     },
     window = function(term, from, to, consumer, limit) {
+      payload <- list(terms = private$terms, from = as.numeric(from), to = as.numeric(to))
+      key <- paste0("search_window:", private$tools$hash(private$tools$json(payload)))
+      private$store$with_recovery_item("search_window", key, payload, function() {
+        private$window_body(term, from, to, consumer, limit)
+      })
+    },
+    window_body = function(term, from, to, consumer, limit) {
       if (private$count >= limit) return(invisible(NULL))
       private$http$progress$activity("Buscando issues")
       first <- private$http$get(private$url(from, to, 1L), "search")

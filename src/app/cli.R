@@ -213,10 +213,10 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
           " diagnósticos sem verificação; banco oficial anterior preservado.")
       }
       unverified <- problems$pending + problems$gaps
-      label_status <- if (problems$pending > 0L) paste0("concluída | ", unverified,
-        " diagnósticos registrados; itens sem verificação desconsiderados na análise") else
-        if (problems$gaps > 0L) paste0("concluída | ", private$gap_summary(problems$gaps)) else "concluída"
+      label_status <- if (unverified > 0L) paste0("concluída | ", unverified,
+        " item(ns) pendente(s)/inconclusivo(s)") else "concluída"
       private$progress$report(paste("Coleta", label, label_status))
+      private$report_unresolved_problems(store, store$run_id)
       invisible(status)
     },
     collection_counts = function(store, platform) {
@@ -237,9 +237,19 @@ ProjectApplication <- R6::R6Class("ProjectApplication",
       tolerated <- store$search_gap_codes(platform)
       list(pending = sum(!codes %in% tolerated), gaps = sum(codes %in% tolerated))
     },
-    gap_summary = function(count) {
-      paste0(count, " ", if (count == 1L) "intervalo sem resultado verificável" else
-        "intervalos sem resultados verificáveis", "; desconsiderados na análise")
+    report_unresolved_problems = function(store, run_id) {
+      rows <- store$query(paste(
+        "SELECT code,resource,detail FROM problems WHERE run_id=? AND resolved=0",
+        "ORDER BY code,resource,problem_id"), list(run_id))
+      if (!nrow(rows)) return(invisible(NULL))
+      format_value <- function(value) if (is.na(value) || !nzchar(value)) "(sem detalhe)" else value
+      details <- vapply(seq_len(nrow(rows)), function(index) {
+        paste0("- [", rows$code[[index]], "] ", format_value(rows$resource[[index]]),
+          " — ", format_value(rows$detail[[index]]))
+      }, "")
+      private$progress$event(paste(c(paste0("Itens com erro ainda pendentes/inconclusivos (", nrow(rows), "):",
+        " a coleta continua concluída"), details), collapse = "\n"))
+      invisible(rows)
     },
     site = function() {
       private$progress$stage("Geração do site")

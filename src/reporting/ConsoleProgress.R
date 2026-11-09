@@ -64,7 +64,7 @@ ConsoleProgress <- R6::R6Class("ConsoleProgress",
       private$write(paste0(text, "\n"))
     },
     clear = function() {
-      if (private$visible) private$write("\r\033[2K")
+      if (private$visible) private$write("\033[1G\033[2K")
       private$visible <- FALSE
       private$last_frame <- -Inf
     },
@@ -112,7 +112,13 @@ ConsoleProgress <- R6::R6Class("ConsoleProgress",
       frames <- c("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
       private$frame_index <- private$frame_index %% length(frames) + 1L
       tail <- paste0(" | ", private$timing(now))
-      width <- max(1L, getOption("width", 80L) - nchar(tail, type = "width") - 3L)
+      terminal_width <- suppressWarnings(as.integer(Sys.getenv("COLUMNS", "")))
+      if (length(terminal_width) != 1L || is.na(terminal_width) || terminal_width < 20L) {
+        terminal_width <- getOption("width", 80L)
+      }
+      # R and COLUMNS can over-report narrow terminal panes.
+      terminal_width <- min(terminal_width, 72L)
+      width <- max(1L, terminal_width - nchar(tail, type = "width") - 5L)
       available <- min(22L, max(0L, width - nchar(private$activity_label, type = "width") - 3L))
       context <- substr(private$context, 1L, available)
       if (nchar(private$context, type = "width") > available && available >= 4L) {
@@ -121,7 +127,7 @@ ConsoleProgress <- R6::R6Class("ConsoleProgress",
       fields <- c(context, private$activity_label)
       label <- paste(fields[nzchar(fields)], collapse = " | ")
       text <- paste0(frames[[private$frame_index]], " ", substr(label, 1L, width), tail)
-      private$write(paste0("\r\033[2K", text))
+      private$write(paste0("\033[1G\033[2K", text))
       private$visible <- TRUE
       private$last_frame <- now
     }

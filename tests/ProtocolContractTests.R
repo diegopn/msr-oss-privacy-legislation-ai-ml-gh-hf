@@ -22,6 +22,8 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       private$search_gap_handling()
       private$search_invalid_pages()
       private$acquisition_gaps()
+      private$github_recovery()
+      private$pending_issue_exclusion()
       private$collectors()
       private$site_repository_metrics()
       private$collection_optimization()
@@ -138,7 +140,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       repo$private <- NULL
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$reason, "visibility_unknown_or_private")
       repo$private <- FALSE; repo$platform <- "huggingface"; repo$gated <- "auto"
-      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$reason, "gated_or_unknown")
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
       testthat::expect_true(policy$bot(list(type = "Bot", login = "person")))
       testthat::expect_true(policy$bot(list(type = "User", login = "build-bot")))
       testthat::expect_false(policy$bot(list(type = "User", login = "robotics")))
@@ -422,7 +424,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
           if (name == "incomplete") "incomplete_search_page" else "invalid_search_page")
       }
     }),
-    acquisition_gaps = function() testthat::test_that("falhas HTTP deixam a coleta GitHub incompleta e fora da análise", {
+    acquisition_gaps = function() testthat::test_that("falha HTTP transitória é revisada ao fim da coleta GitHub", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
       fixture$store$start("github")
       mock <- MockHubTransport$new(private$factory)
@@ -434,10 +436,14 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         }
         mock$perform(url, headers, timeout)
       })
-      testthat::expect_identical(GitHubCollector$new(fixture$config, fixture$store, http)$run(), "incomplete")
+      testthat::expect_identical(GitHubCollector$new(fixture$config, fixture$store, http)$run(), "completed")
       testthat::expect_true(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE code='http_failure'")$n > 0L)
+      recovery <- fixture$store$recovery_summary(fixture$store$run_id)
+      testthat::expect_equal(recovery$initial_pending[[1L]], 1L)
+      testthat::expect_equal(recovery$pass1_resolved[[1L]], 1L)
+      testthat::expect_equal(recovery$final_pending[[1L]], 0L)
       journal <- CollectionJournal$new(fixture$config)
-      journal$record("github", fixture$store$run_id, "incomplete", fixture$config)
+      journal$record("github", fixture$store$run_id, "completed", fixture$config)
       mock <- MockHubTransport$new(private$factory)
       hf <- private$factory$http(fixture, "huggingface", mock$perform)
       fixture$config$osi$licenses <- Filter(function(x) x$id %in% c("MIT", "Apache-2.0"), fixture$config$osi$licenses)
@@ -449,9 +455,89 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         private$factory$response(list(events = "not-a-list")))
       testthat::expect_null(HuggingFaceClient$new(malformed_detail, fixture$config, fixture$store)$discussion(
         list(type = "model", id = "org/demo"), 1L))
-      testthat::expect_error(AnalysisGate$new(fixture$config, fixture$store)$verify(), "incompleta")
-      testthat::expect_error(AnalysisExporter$new(fixture$config, fixture$store)$run(), "incompleta")
-      testthat::expect_true(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE code='http_failure' AND resolved=0")$n > 0L)
+      testthat::expect_silent(AnalysisGate$new(fixture$config, fixture$store)$verify())
+      testthat::expect_silent(AnalysisExporter$new(fixture$config, fixture$store)$run())
+      testthat::expect_gt(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE code='http_failure' AND resolved=1")$n, 0L)
+    }),
+    github_recovery = function() testthat::test_that("GitHub repassa pendências e conclui mesmo com itens inconclusivos", {
+      run_case <- function(persistent) {
+        fixture <- private$factory$create()
+        fixture$config$settings$protocol$laws <- list(list(name = "Teste", start = "2020-01-01",
+          terms = c("GDPR", "CCPA", "CPRA", "DPA")))
+        calls <- new.env(parent = emptyenv())
+        events <- character()
+        http <- private$factory$http(fixture, "github", function(url, headers, timeout) {
+          query <- utils::URLdecode(sub(".*[?&]q=([^&]+).*", "\\1", url))
+          term <- sub('.*"([^"]+)".*', "\\1", query)
+          count <- if (exists(term, calls, inherits = FALSE)) calls[[term]] + 1L else 1L
+          calls[[term]] <- count
+          if (count == 1L || (term %in% persistent && count <= 3L)) {
+            return(private$factory$response(status = 422L))
+          }
+          private$factory$response(list(total_count = 0L, incomplete_results = FALSE, items = list()))
+        })
+        http$progress <- ConsoleProgress$new(terminal = FALSE, write = function(text) events <<- c(events, text))
+        collector <- GitHubCollector$new(fixture$config, fixture$store, http)
+        status <- collector$run()
+        summary <- fixture$store$recovery_summary(fixture$store$run_id)
+        gate <- AnalysisGate$new(fixture$config, fixture$store)
+        testthat::expect_silent(gate$verify_recovery("github", fixture$store$run_id))
+        output <- paste(events, collapse = "\n")
+        fixture$cleanup()
+        list(status = status, summary = summary, output = output)
+      }
+      quarter <- run_case("GDPR")
+      testthat::expect_identical(quarter$status, "completed")
+      testthat::expect_equal(quarter$summary$initial_pending[[1L]], 4L)
+      testthat::expect_equal(quarter$summary$pass1_attempted[[1L]], 4L)
+      testthat::expect_equal(quarter$summary$pass1_resolved[[1L]], 3L)
+      testthat::expect_equal(quarter$summary$pass1_pending[[1L]], 1L)
+      testthat::expect_equal(quarter$summary$pass2_attempted[[1L]], 1L)
+      testthat::expect_equal(quarter$summary$final_pending[[1L]], 1L)
+      testthat::expect_equal(quarter$summary$final_diagnostics[[1L]], 1L)
+      testthat::expect_false(any(c("final_share", "threshold", "accepted") %in% names(quarter$summary)))
+      testthat::expect_match(quarter$output, "Pendências finais")
+      half <- run_case(c("GDPR", "CCPA"))
+      testthat::expect_identical(half$status, "completed")
+      testthat::expect_equal(half$summary$final_pending[[1L]], 2L)
+      testthat::expect_equal(half$summary$final_diagnostics[[1L]], 2L)
+    }),
+    pending_issue_exclusion = function() testthat::test_that("issues ainda pendentes são retiradas da população analítica", {
+      fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
+      store <- fixture$store
+      store$start("github")
+      repository <- list(key = "github:repository:org/demo", platform = "github", type = "repository",
+        id = "org/demo", status = "eligible", reason = "eligible", ai = list(signals = list()))
+      store$repository(repository)
+      key <- "github:issue:42"
+      store$artifact(list(key = key, unit_key = key, repo_key = repository$key, platform = "github",
+        kind = "issue", created = "2022-01-01", text = "GDPR", url = "https://github.com/org/demo/issues/42",
+        metadata = list()))
+      store$evidence(list(unit_key = key, artifact_key = key, kind = "legal", label = "GDPR",
+        term = "GDPR", vocabulary = "legal-laws"), "github")
+      store$with_recovery_item("issue", key, list(item = list(id = 42L)), function() {
+        store$problem("comments_incomplete", "https://github.com/org/demo/issues/42",
+          "Contagem de comentários incompleta")
+      })
+      testthat::expect_equal(nrow(PopulationBuilder$new(store)$build()), 0L)
+      testthat::expect_equal(sum(store$counts()$legal_discussions$n), 0L)
+      store$resolve_recovery_item(key)
+      testthat::expect_equal(nrow(PopulationBuilder$new(store)$build()), 1L)
+      testthat::expect_equal(sum(store$counts()$legal_discussions$n), 1L)
+      store$with_recovery_item("issue", key, list(item = list(id = 42L)), function() {
+        store$problem("comments_incomplete", "https://github.com/org/demo/issues/42",
+          "Contagem de comentários incompleta")
+      })
+      store$finish("incomplete")
+      store$start("github")
+      store$clear_platform("github")
+      store$repository(repository)
+      store$artifact(list(key = key, unit_key = key, repo_key = repository$key, platform = "github",
+        kind = "issue", created = "2022-01-01", text = "GDPR", url = "https://github.com/org/demo/issues/42",
+        metadata = list()))
+      store$evidence(list(unit_key = key, artifact_key = key, kind = "legal", label = "GDPR",
+        term = "GDPR", vocabulary = "legal-laws"), "github")
+      testthat::expect_equal(nrow(PopulationBuilder$new(store)$build()), 1L)
     }),
     collectors = function() testthat::test_that("coletores reais operam sobre respostas simuladas e deduplicam", {
       fixture <- private$factory$create(); on.exit(fixture$cleanup(), add = TRUE)
@@ -798,11 +884,11 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
             list(id = "org/space-two", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
               disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()),
             list(id = "org/space-unlicensed", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
-              disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()),
+              disabled = FALSE, gated = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()),
             list(id = "org/space-gated", createdAt = "2021-01-01T00:00:00Z", private = FALSE,
-              disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list()))))
+              disabled = FALSE, gated = "manual", sdk = "gradio", tags = list("gradio"), cardData = list()))))
           return(private$factory$response(list(list(id = "org/space-one", createdAt = "2021-01-01T00:00:00Z",
-            private = FALSE, disabled = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())), headers = list(link =
+            private = FALSE, disabled = FALSE, gated = FALSE, sdk = "gradio", tags = list("gradio"), cardData = list())), headers = list(link =
             '<https://huggingface.co/api/spaces?limit=100&page=2&expand=createdAt&expand=private&expand=disabled&expand=cardData&expand=tags&expand=sdk>; rel="next"')))
         }
         if (grepl("/api/spaces/org/", url, fixed = TRUE) && !grepl("/discussions", url, fixed = TRUE)) {
@@ -851,7 +937,7 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_true(any(grepl("/spaces/org/space-one/resolve/main/README.md", requests, fixed = TRUE)))
       testthat::expect_true(any(grepl("/spaces/org/space-two/resolve/main/README.md", requests, fixed = TRUE)))
       testthat::expect_false(any(grepl("/spaces/org/space-gated/resolve/main/README.md", requests, fixed = TRUE)))
-      testthat::expect_true(any(grepl("/api/spaces/org/space-two$", requests)))
+      testthat::expect_false(any(grepl("/api/spaces/org/space-two$", requests)))
       discussion_requests <- requests[grepl("/discussions/[234]$", requests)]
       testthat::expect_length(discussion_requests, 0L)
       urls <- fixture$store$query("SELECT url FROM artifacts WHERE kind='discussion'")$url
@@ -860,9 +946,9 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       policy <- EligibilityPolicy$new(fixture$config)
       repo <- list(platform = "huggingface", type = "space", private = FALSE, available = TRUE,
         created = "2021-01-01T00:00:00Z", license = "MIT", disabled = FALSE)
-      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "excluded")
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
       repo$gated <- "manual"
-      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "excluded")
+      testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
       repo$gated <- FALSE
       testthat::expect_identical(policy$assess(repo, list(status = "eligible"))$status, "eligible")
       testthat::expect_identical(AIClassifier$new(fixture$config)$huggingface(
@@ -1226,12 +1312,12 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
         status <- fixture$store$finish()
         journal$record(platform, fixture$store$run_id, status, fixture$config)
       }
-      testthat::expect_error(gate$verify(), "lacunas")
+      testthat::expect_silent(gate$verify())
       testthat::expect_equal(fixture$store$query("SELECT COUNT(*) n FROM problems WHERE resolved=0")$n, 1L)
       DBI::dbExecute(fixture$store$connection, "UPDATE problems SET resolved=1 WHERE code='search_empty_second'")
       testthat::expect_silent(gate$verify())
       DBI::dbExecute(fixture$store$connection, "UPDATE problems SET resolved=0 WHERE code='http_failure'")
-      testthat::expect_error(gate$verify(), "lacunas")
+      testthat::expect_silent(gate$verify())
       DBI::dbExecute(fixture$store$connection, "UPDATE problems SET resolved=1 WHERE code='http_failure'")
       testthat::expect_silent(gate$verify())
       exported <- AnalysisExporter$new(fixture$config, fixture$store)$run()
@@ -1342,9 +1428,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       path <- paths$github
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- TRUE
-      testthat::expect_error(capture.output(app$run("--github")), "Coleta GitHub incompleta: 14 diagnósticos")
-      testthat::expect_identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash)
-      testthat::expect_error(capture.output(app$run("--analyze")), "última tentativa")
+      failed_output <- capture.output(app$run("--github"))
+      testthat::expect_match(paste(failed_output, collapse = "\n"), "pendente.*inconclusivo")
+      testthat::expect_false(identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash))
+      capture.output(app$run("--analyze"))
       testthat::expect_false(dir.exists(file.path(root, ".run-lock/github")))
       testthat::expect_false(dir.exists(file.path(root, ".run-lock/huggingface")))
       unlink(c(coding_input, consensus_input))
@@ -1352,10 +1439,10 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       app$run("--github")
       app$run("--huggingface")
       inject_gap <- TRUE
-      run_error <- testthat::expect_error(capture.output(app$run("--run")), "Coleta GitHub incompleta")
+      run_output <- capture.output(app$run("--run"))
       inject_gap <- FALSE
       testthat::expect_true(gap_recorded)
-      testthat::expect_match(conditionMessage(run_error), "banco oficial anterior preservado")
+      testthat::expect_match(paste(run_output, collapse = "\n"), "Recuperação final do GitHub")
       gap_store <- AuditStore$new(path, config)
       gap_run <- gap_store$query("SELECT run_id,status FROM runs WHERE platform='github' AND pilot=0 ORDER BY rowid DESC LIMIT 1")
       testthat::expect_identical(gap_run$status, "completed")
@@ -1365,8 +1452,9 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       testthat::expect_equal(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 18L)
       hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
       failure <- TRUE
-      testthat::expect_error(capture.output(app$run("--run")), "Coleta GitHub incompleta")
-      testthat::expect_identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash)
+      failed_output <- capture.output(app$run("--run"))
+      testthat::expect_match(paste(failed_output, collapse = "\n"), "pendente.*inconclusivo")
+      testthat::expect_false(identical(digest::digest(file = path, algo = "sha256", serialize = FALSE), hash))
       testthat::expect_gt(nrow(utils::read.csv(config$path("inputs/final/collection/sample.csv"))), 0L)
       testthat::expect_false(dir.exists(file.path(root, ".run-lock/github")))
       testthat::expect_false(dir.exists(file.path(root, ".run-lock/huggingface")))
@@ -1430,13 +1518,13 @@ ProtocolContractTests <- R6::R6Class("ProtocolContractTests",
       progress$activity("Coletando comentários")
       now <- 0.3; progress$tick()
       now <- 0.6; progress$tick()
-      frames <- output[grepl("\r", output, fixed = TRUE) & grepl("Total:", output, fixed = TRUE)]
+      frames <- output[grepl("\033[1G", output, fixed = TRUE) & grepl("Total:", output, fixed = TRUE)]
       testthat::expect_true(length(unique(frames)) >= 2L)
-      testthat::expect_true(all(startsWith(frames, "\r\033[2K")))
+      testthat::expect_true(all(startsWith(frames, "\033[1G\033[2K")))
       progress$scope("Busca 2/7: General Data Protection Regulation", "General Data Protection Regulation")
       progress$activity("Coletando comentários")
       now <- 0.9; progress$tick()
-      frame <- tail(output[grepl("\r", output, fixed = TRUE) & grepl("Total:", output, fixed = TRUE)], 1L)
+      frame <- tail(output[grepl("\033[1G", output, fixed = TRUE) & grepl("Total:", output, fixed = TRUE)], 1L)
       testthat::expect_match(frame, "Coletando")
       progress$finish("Piloto concluído")
       testthat::expect_match(tail(output, 1L), "Piloto concluído.*Total:")

@@ -3,12 +3,7 @@ PopulationBuilder <- R6::R6Class("PopulationBuilder",
     initialize = function(store) private$stores <- PlatformStores$new(store),
     build = function() {
       rows <- lapply(c("github", "huggingface"), function(platform) {
-        private$stores$for_platform(platform)$query(paste(
-          "SELECT DISTINCT a.artifact_key AS unit_key,a.repo_key,a.platform,r.repo_type,e.label AS law,a.url,a.created",
-          "FROM artifacts a JOIN repositories r ON a.repo_key=r.repo_key",
-          "JOIN evidences e ON e.unit_key=a.artifact_key",
-          "WHERE a.platform=? AND a.kind IN ('issue','discussion') AND e.kind='legal' AND r.status='eligible'",
-          "ORDER BY a.platform,r.repo_type,e.label,a.artifact_key"), list(platform))
+        private$platform_population(platform)
       })
       private$bind_rows(rows, data.frame(unit_key = character(), repo_key = character(), platform = character(),
         repo_type = character(), law = character(), url = character(), created = character()))
@@ -48,6 +43,21 @@ PopulationBuilder <- R6::R6Class("PopulationBuilder",
     }
   ), private = list(
     stores = NULL,
+    platform_population = function(platform) {
+      store <- private$stores$for_platform(platform)
+      pending_filter <- if (platform == "github" && DBI::dbExistsTable(store$connection, "recovery_items")) {
+        paste("AND NOT EXISTS (SELECT 1 FROM recovery_items ri",
+          "WHERE ri.run_id=a.run_id AND ri.item_key=a.artifact_key",
+          "AND ri.kind='issue' AND ri.status='pending')")
+      } else ""
+      store$query(paste(
+        "SELECT DISTINCT a.artifact_key AS unit_key,a.repo_key,a.platform,r.repo_type,e.label AS law,a.url,a.created",
+        "FROM artifacts a JOIN repositories r ON a.repo_key=r.repo_key",
+        "JOIN evidences e ON e.unit_key=a.artifact_key",
+        "WHERE a.platform=? AND a.kind IN ('issue','discussion') AND e.kind='legal' AND r.status='eligible'",
+        pending_filter,
+        "ORDER BY a.platform,r.repo_type,e.label,a.artifact_key"), list(platform))
+    },
     bind_rows = function(rows, empty) {
       rows <- Filter(function(value) nrow(value) > 0L, rows)
       if (length(rows)) return(do.call(rbind, rows))

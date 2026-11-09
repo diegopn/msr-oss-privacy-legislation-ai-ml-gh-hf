@@ -27,7 +27,6 @@ EligibilityPolicy <- R6::R6Class("EligibilityPolicy",
       reasons <- c(unavailable = !isTRUE(repo$available),
         visibility_unknown_or_private = !identical(repo$private, FALSE),
         disabled_or_unknown = disabled,
-        gated_or_unknown = identical(repo$platform, "huggingface") && !identical(repo$gated, FALSE),
         license_not_approved = !private$license$accepts(repo$license),
         fork = !private$settings$accept_forks && isTRUE(repo$fork),
         archived = !private$settings$accept_archived && isTRUE(repo$archived))

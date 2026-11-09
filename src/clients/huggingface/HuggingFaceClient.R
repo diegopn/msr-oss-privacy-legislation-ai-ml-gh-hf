@@ -47,7 +47,12 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
         response <- private$http$get(url, "pages", optional = "discussions")
         if (is.null(response)) {
           private$store$unavailable(url, "discussions_unavailable")
-          return(output)
+          if (length(output)) {
+            private$store$problem("incomplete_discussion_pagination", url,
+              "A listagem terminou antes do total informado")
+            return(output)
+          }
+          return(NULL)
         }
         data <- response$data
         if (!private$validate_page(data, expected_start, url)) return(output)
@@ -88,24 +93,19 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
       private$standard_metadata_complete(metadata)
     },
     space_metadata_complete = function(metadata) {
-      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled) &&
-        private$gate_flag(metadata$gated)
+      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled)
     },
     kernel_metadata_complete = function(metadata) {
-      private$logical_flag(metadata$private) && private$gate_flag(metadata$gated)
+      private$logical_flag(metadata$private)
     },
     standard_metadata_complete = function(metadata) {
-      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled) &&
-        private$gate_flag(metadata$gated)
+      private$logical_flag(metadata$private) && private$logical_flag(metadata$disabled)
     },
     logical_flag = function(value) {
       is.logical(value) && length(value) == 1L && !is.na(value)
     },
-    gate_flag = function(value) {
-      private$logical_flag(value) || identical(value, "auto") || identical(value, "manual")
-    },
     gate_status = function(value) {
-      if (is.null(value)) return(FALSE)
+      if (is.null(value)) return(NA)
       if (private$logical_flag(value)) return(value)
       if (identical(value, "auto") || identical(value, "manual")) return(TRUE)
       NA
@@ -152,12 +152,12 @@ HuggingFaceClient <- R6::R6Class("HuggingFaceClient",
         is.null(metadata$disabled) || identical(metadata$disabled, FALSE)
       } else identical(metadata$disabled, FALSE)
       visible <- identical(metadata$private, FALSE) && disabled
-      visible && identical(private$gate_status(metadata$gated), FALSE)
+      visible && !isTRUE(private$gate_status(metadata$gated))
     },
     card = function(type, id) {
       prefix <- switch(type, dataset = "datasets/", space = "spaces/", kernel = "kernels/", "")
       url <- paste0("https://huggingface.co/", prefix, id, "/resolve/main/README.md")
-      response <- private$http$get(url, "resolvers", optional = TRUE)
+      response <- private$http$get(url, "resolvers", optional = "card")
       if (is.null(response)) return(list())
       lines <- strsplit(response$text, "\n", fixed = TRUE)[[1L]]
       lines[[1L]] <- sub("^\ufeff", "", lines[[1L]])

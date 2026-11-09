@@ -40,11 +40,20 @@ HttpClient <- R6::R6Class("HttpClient",
       failure <- private$failure_state
       if (is.null(failure) || !identical(failure$url, url)) return(NULL)
       failure
+    },
+    recovery_budget = function(seconds = NULL) {
+      private$recovery_deadline <- if (is.null(seconds)) NULL else private$clock() + max(0, as.numeric(seconds))
+      private$quota_started <- NULL
+      invisible(private$recovery_deadline)
+    },
+    recovery_time_left = function() {
+      if (is.null(private$recovery_deadline)) return(Inf)
+      max(0, private$recovery_deadline - private$clock())
     }
   ),
   private = list(
     platform = NULL, config = NULL, store = NULL, transport = NULL, clock = NULL,
-    sleep = NULL, token = NULL, last = NULL, failure_state = NULL, quota_started = NULL,
+    sleep = NULL, token = NULL, last = NULL, failure_state = NULL, quota_started = NULL, recovery_deadline = NULL,
     retry_get = function(url, bucket, optional) {
       failures <- 0L
       quota_retries <- 0L
@@ -90,6 +99,7 @@ HttpClient <- R6::R6Class("HttpClient",
     unavailable = function(result, optional) {
       if (identical(optional, FALSE)) return(FALSE)
       if (result$status %in% c(404L, 410L)) return(TRUE)
+      if (identical(optional, "card") && result$status %in% c(401L, 403L)) return(TRUE)
       if (!identical(optional, "discussions") || result$status != 403L) return(FALSE)
       text <- if (is.raw(result$body)) rawToChar(result$body) else result$body
       grepl("discussions? (are |is )?disabled", text, ignore.case = TRUE, perl = TRUE)
@@ -188,11 +198,12 @@ HttpClient <- R6::R6Class("HttpClient",
       if (is.null(private$quota_started)) private$quota_started <- now
       github <- private$platform == "github"
       budget <- if (github) private$config$github_quota_budget else private$config$hf_quota_budget
+      if (!is.null(private$recovery_deadline)) budget <- min(budget, max(0, private$recovery_deadline - now))
       delay <- private$reset_delay(result$headers, retries)
       exhausted <- !github && retries > private$config$hf_quota_retries
       if (exhausted || now - private$quota_started + delay > budget) {
         private$store$problem("quota_budget", if (github) url else private$platform, "Orçamento de espera esgotado")
-        if (github) stop("Cota do GitHub não renovada dentro do limite de espera; coleta interrompida sem promover o banco parcial.", call. = FALSE)
+        if (github && is.null(private$recovery_deadline)) stop("Cota do GitHub não renovada dentro do limite de espera; coleta interrompida sem promover o banco parcial.", call. = FALSE)
         return(FALSE)
       }
       self$progress$event(paste0(private$platform, ": Aguardando renovação da cota por ",

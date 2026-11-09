@@ -103,10 +103,11 @@ A coleta usa o corte inclusivo de **22/09/2026 UTC**, aplicado ao conteúdo, nã
 - **Hugging Face:** modelos, datasets, Spaces e Kernels com Discussions.
   Discussões precisam estar fechadas; pull requests e autores-bot são excluídos,
   mas comentários de bots são preservados. Buckets não entram porque não têm
-  Discussions; Spaces gated são excluídos. Os metadados variam entre tipos.
-  A rota de listagem de Kernels usada pelo coletor não consta entre os métodos
-  gerais documentados pela API; paginação e cobertura ainda precisam de
-  validação ao vivo antes de uma coleta integral ser reconhecida.
+  Discussions. O status gated é registrado quando disponível, mas não exclui
+  um repositório: a restrição aos arquivos do modelo não determina o acesso às
+  Discussions. Repositórios sem um endpoint acessível de Discussions são
+  excluídos da população elegível; falhas técnicas ficam registradas como
+  lacunas.
 - **Conteúdo:** datas ausentes ou inválidas não comprovam elegibilidade.
   Menções legais são confirmadas no conteúdo coletado. O processo não conclui
   conformidade jurídica.
@@ -144,8 +145,16 @@ faltarem, a geração falha com diagnóstico explícito.
 
 Páginas de 100 itens não limitam a população. Buscas GitHub são subdivididas
 quando atingem o limite de resultados; falhas de paginação ou respostas
-incompletas impedem validar a cobertura. As chamadas respeitam cotas e repetem
-falhas transitórias dentro dos limites configurados.
+incompletas ficam registradas como pendências ou resultados inconclusivos. As
+chamadas respeitam cotas e repetem falhas transitórias dentro dos limites
+configurados.
+
+Ao fim da coleta oficial do GitHub, o programa tenta novamente as pendências em
+duas passagens, cada uma com o orçamento de espera configurado para a cota. A
+execução continua concluída mesmo quando alguns itens permanecem pendentes ou
+inconclusivos. Esses itens são listados no terminal e ficam registrados no
+banco; issues ainda pendentes ficam fora da população analítica. O resumo das
+duas passagens também é exibido no terminal e gravado no banco.
 
 | Limite do piloto | GitHub | Hugging Face |
 |---|---:|---:|
@@ -153,6 +162,8 @@ falhas transitórias dentro dos limites configurados.
 | Issues / Discussions processadas | Até 100 no piloto | Até 20 por repositório |
 | Repositórios elegíveis processados | — | Até 1.000 por tipo |
 | Comentários processados | Até 20 por issue | — |
+
+Todos os números da tabela são limites do piloto; nenhum deles é um teto total da coleta oficial. Isso inclui os 1.000 resultados por termo, as 100 issues e os 20 comentários por issue no GitHub, assim como os limites por tipo e por repositório no Hugging Face. A API continua impondo limites por chamada — por exemplo, até 100 itens por página e até 1.000 resultados por consulta de busca do GitHub —; na coleta oficial, o programa pagina e subdivide as consultas por período. Falhas pontuais ficam documentadas como pendentes ou inconclusivas e não reprovam a execução inteira.
 
 Os limites servem para testar o fluxo. O piloto não estima cobertura, tempo nem
 consumo de cota da coleta integral.

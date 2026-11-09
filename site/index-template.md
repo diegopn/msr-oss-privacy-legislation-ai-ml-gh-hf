@@ -39,7 +39,7 @@ subtitle: "GitHub e Hugging Face"
 
 <ul>
 <li data-i18n="github">GitHub: busca global por termos legais em issues públicas fechadas; exige sinal de IA/ML e evidência técnica no repositório. Exclui pull requests e autores-bot; comentários de bots podem contar.</li>
-<li data-i18n="hf">Hugging Face: modelos, datasets, Spaces e Kernels com Discussions fechadas. Exclui pull requests e autores-bot; preserva comentários de bots. Buckets não têm Discussions; Spaces gated são excluídos.</li>
+<li data-i18n="hf">Hugging Face: modelos, datasets, Spaces e Kernels com Discussions fechadas. Exclui pull requests e autores-bot; preserva comentários de bots. Buckets não têm Discussions. O status gated não exclui o repositório por si só; repositórios sem endpoint acessível de Discussions não entram na população elegível.</li>
 <li data-i18n="licenses">Em ambas as plataformas, o repositório precisa ser público e usar licença SPDX aprovada pela lista OSI local. Não há limiar de popularidade.</li>
 <li data-i18n="concepts">A configuração preserva 20 conceitos e a taxonomia de 24 categorias; palavras-chave não atribuem categorias automaticamente.</li>
 </ul>
@@ -67,7 +67,6 @@ quarto preview
 
 <ul>
 <li data-i18n="limits">Menções textuais não determinam conformidade legal. Os totais GitHub vêm de buscas por leis; a descoberta HF depende da indexação de licenças. O piloto é limitado.</li>
-<li data-i18n="kernel_limit">A rota de listagem de Kernels ainda requer validação ao vivo de paginação e cobertura.</li>
 </ul>
 
 ## Referências {#referencias-metodologicas}
