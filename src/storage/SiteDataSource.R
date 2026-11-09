@@ -81,8 +81,6 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
       on.exit(stores$close(), add = TRUE)
       AnalysisGate$new(private$config, stores)$verify()
       latest <- private$latest_official_runs(stores)
-      incomplete <- names(latest)[vapply(latest, is.null, logical(1))]
-      if (length(incomplete)) return(private$retain_previous_source(incomplete[[1L]]))
       snapshot_state <- new.env(parent = emptyenv())
       snapshot_state$created <- character()
       on.exit(if (length(snapshot_state$created)) unlink(snapshot_state$created), add = TRUE)
@@ -123,22 +121,7 @@ SiteDataSource <- R6::R6Class("SiteDataSource",
       rows <- store$query(paste("SELECT run_id,platform,status,pilot,cutoff,version,config_hash,started,finished",
         "FROM runs WHERE pilot=0 AND platform=? ORDER BY rowid DESC LIMIT 1"), list(platform))
       if (nrow(rows) != 1L) stop("Coleta oficial ausente: ", platform, call. = FALSE)
-      unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE resolved=0 AND run_id=?",
-        list(rows$run_id[[1L]]))$n[[1L]]
-      if (unresolved > 0L) {
-        if (platform != "github") return(NULL)
-        valid <- tryCatch({
-          AnalysisGate$new(private$config, stores)$verify_recovery(platform, rows$run_id[[1L]])
-          TRUE
-        }, error = function(error) FALSE)
-        if (!valid) return(NULL)
-      }
       rows
-    },
-    retain_previous_source = function(platform) {
-      previous <- private$read_state()
-      list(locked = FALSE, source = previous$source,
-        reason = paste("A coleta", platform, "terminou com lacunas de cobertura não verificadas."))
     },
     official_info = function(database_paths, stores, latest, snapshot_state) {
       run_ids <- lapply(latest, function(rows) rows$run_id[[1L]])

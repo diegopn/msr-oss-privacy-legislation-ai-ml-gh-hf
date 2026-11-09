@@ -135,11 +135,13 @@ Cada piloto remove os artefatos do piloto anterior antes de começar. A última
 tentativa, inclusive se falhar, fica em `inputs/data/pilot/` e `inputs/raw/pilot/`.
 Falhas de coleta não substituem o banco científico válido.
 
-O site usa o piloto como prévia preliminar até a primeira execução completa das
-duas plataformas, sem limites de piloto e com cobertura e paginação verificadas.
-A transição é registrada e o snapshot oficial fica fora das pastas apagadas por
-novos pilotos. Depois dela, o site nunca volta ao piloto; se os dados oficiais
-faltarem, a geração falha com diagnóstico explícito.
+O site usa o piloto como prévia preliminar até a primeira execução concluída das
+duas plataformas, com validação do protocolo e da integridade das respostas
+registradas. Erros pontuais ficam como pendentes ou inconclusivos, são listados
+no terminal e não invalidam uma coleta concluída; os itens afetados ficam fora
+da população analítica. A transição é registrada e o snapshot oficial fica fora
+das pastas apagadas por novos pilotos. Depois dela, o site nunca volta ao piloto;
+se os dados oficiais faltarem, a geração falha com diagnóstico explícito.
 
 ## Paginação e limites do piloto
 

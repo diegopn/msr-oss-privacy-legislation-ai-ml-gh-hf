@@ -40,13 +40,6 @@ AnalysisGate <- R6::R6Class("AnalysisGate",
       if (is.null(journal) || journal$status != "completed" || journal$run_id != runs$run_id) {
         stop("A última tentativa de coleta não foi concluída: ", platform, call. = FALSE)
       }
-      if (platform == "github") {
-        unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND resolved=0",
-          list(runs$run_id))$n[[1L]]
-        if (unresolved > 0L || nrow(store$recovery_summary(runs$run_id)) > 0L) {
-          private$check_recovery(store, runs$run_id, unresolved)
-        }
-      }
       private$verify_responses(store, runs$run_id)
     },
     verify_protocol = function(runs, platform) {
@@ -70,11 +63,6 @@ AnalysisGate <- R6::R6Class("AnalysisGate",
       if (nrow(runs) != 1L) stop("Snapshot oficial sem execução integral registrada: ", platform, call. = FALSE)
       private$verify_protocol(runs, platform)
       private$verify_responses(store, run_id)
-      unresolved <- store$query("SELECT COUNT(*) n FROM problems WHERE run_id=? AND resolved=0", list(run_id))$n[[1L]]
-      summary_exists <- platform == "github" && nrow(store$recovery_summary(run_id)) > 0L
-      if (platform == "github" && (unresolved > 0L || summary_exists)) {
-        private$check_recovery(store, run_id, unresolved)
-      }
     },
     check_recovery = function(store, run_id, unresolved) {
       summary <- store$recovery_summary(run_id)
