@@ -188,3 +188,19 @@ Renderizar localmente não cria commits nem publica o projeto.
 - Kapitsaki, G. M.; Papoutsoglou, M.; Treude, C.; Theophilou, I. (2026). *Analyzing developer discussions on EU and US privacy legislation compliance in GitHub repositories*. Information and Software Technology. [DOI: 10.1016/j.infsof.2026.108252](https://doi.org/10.1016/j.infsof.2026.108252). [Pacote de replicação](https://github.com/gkapi/github-privacy-law-issues-analysis).
 - Kosenkov, A. et al. (2026). *Privacy by design: Aligning GDPR and software engineering specifications with a requirements engineering approach*. Information and Software Technology. [DOI: 10.1016/j.infsof.2025.107946](https://doi.org/10.1016/j.infsof.2025.107946).
 - Mitchell, M. et al. (2019). *Model Cards for Model Reporting*. [DOI: 10.1145/3287560.3287596](https://doi.org/10.1145/3287560.3287596).
+
+## Apoie o projeto
+
+Se este projeto contribuir para sua pesquisa ou para o uso da ferramenta, você pode apoiar sua manutenção pelo [GitHub Sponsors](https://github.com/sponsors/diegopn).
+
+<p align="left">
+  <a href="https://github.com/sponsors/diegopn"><img alt="Apoie o projeto" src="https://img.shields.io/badge/Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white"></a>
+</p>
+
+## Segurança
+
+Consulte [SECURITY.md](SECURITY.md) para conhecer as versões cobertas e como relatar vulnerabilidades de forma privada.
+
+## Licença
+
+Este projeto é distribuído sob a [Licença MIT](LICENSE).
