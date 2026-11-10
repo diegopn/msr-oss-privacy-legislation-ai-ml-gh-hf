@@ -212,19 +212,33 @@ A [página de resultados](https://diegopn.github.io/msr-oss-privacy-legislation-
 
 O workflow [check.yml](.github/workflows/check.yml) executa os testes offline em pull requests e em atualizações de `main`. Após os testes passarem em `main`, [quarto-publish.yml](.github/workflows/quarto-publish.yml) renderiza e publica a página no GitHub Pages. A geração local não cria commits nem publica o site.
 
-## Referências e sua relação com o estudo
+## Referências
 
-As publicações orientam conceitos e métodos; os critérios executados e seus parâmetros estão no protocolo versionado em `config/`.
+As referências seguem a ABNT NBR 6023:2025. Os títulos estão vinculados às publicações de origem; o DOI facilita a identificação permanente dos artigos.
 
-| Referência | Contribuição para este projeto |
+### Referências bibliográficas
+
+- AMERSHI, S. et al. [Software engineering for machine learning: a case study](https://doi.org/10.1109/ICSE-SEIP.2019.00042). In: IEEE/ACM INTERNATIONAL CONFERENCE ON SOFTWARE ENGINEERING: SOFTWARE ENGINEERING IN PRACTICE, 41., 2019, Montreal. *Proceedings [...]*. Montreal: IEEE; ACM, 2019. p. 291–300. DOI: 10.1109/ICSE-SEIP.2019.00042.
+- COHEN, J. [A coefficient of agreement for nominal scales](https://doi.org/10.1177/001316446002000104). *Educational and Psychological Measurement*, v. 20, n. 1, p. 37–46, 1960. DOI: 10.1177/001316446002000104.
+- COCHRAN, W. G. [*Sampling techniques*](https://www.wiley.com/en-nl/sampling-techniques-3rd-edition-p-9780471162407). 3. ed. New York: John Wiley & Sons, 1977.
+- GEBRU, T. et al. [Datasheets for datasets](https://doi.org/10.1145/3458723). *Communications of the ACM*, v. 64, n. 12, p. 86–92, 2021. DOI: 10.1145/3458723.
+- HERWANTO, G. B. et al. [Toward a holistic privacy requirements engineering process: insights from a systematic literature review](https://doi.org/10.1109/ACCESS.2024.3380888). *IEEE Access*, v. 12, p. 47518–47542, 2024. DOI: 10.1109/ACCESS.2024.3380888.
+- KAPITSAKI, G. M. [Regulatory compliance-readiness in the AI supply chain: examining datasets in Hugging Face](https://arxiv.org/abs/2607.03310). 2026. Preprint. arXiv:2607.03310. Acesso em: 10 nov. 2026.
+- KAPITSAKI, G. M. et al. [Analyzing developer discussions on EU and US privacy legislation compliance in GitHub repositories](https://doi.org/10.1016/j.infsof.2026.108252). *Information and Software Technology*, v. 199, art. 108252, 2026. DOI: 10.1016/j.infsof.2026.108252.
+- KOSENKOV, O. et al. [Privacy by design: aligning GDPR and software engineering specifications with a requirements engineering approach](https://doi.org/10.1016/j.infsof.2025.107946). *Information and Software Technology*, v. 190, art. 107946, 2026. DOI: 10.1016/j.infsof.2025.107946.
+- MITCHELL, M. et al. [Model cards for model reporting](https://doi.org/10.1145/3287560.3287596). In: CONFERENCE ON FAIRNESS, ACCOUNTABILITY, AND TRANSPARENCY, 2019, Atlanta. *Proceedings [...]*. New York: ACM, 2019. p. 220–229. DOI: 10.1145/3287560.3287596.
+
+### Relação das fontes com o projeto
+
+| Fonte | Contribuição para este projeto |
 |---|---|
-| Amershi et al. (2019), [*Software Engineering for Machine Learning: A Case Study*](https://doi.org/10.1109/ICSE-SEIP.2019.00042) | Contextualiza práticas e etapas de engenharia de software para ML, relacionadas ao foco de RQ3. |
-| Cohen (1960), [*A Coefficient of Agreement for Nominal Scales*](https://doi.org/10.1177/001316446002000104) | Referência sobre concordância em categorias nominais. |
-| Cochran (1977), *Sampling Techniques* (3ª ed., Wiley) | Fundamenta o cálculo do tamanho da amostra com correção para população finita. |
-| Gebru et al. (2021), [*Datasheets for Datasets*](https://doi.org/10.1145/3458723) e Mitchell et al. (2019), [*Model Cards for Model Reporting*](https://doi.org/10.1145/3287560.3287596) | Referências sobre documentação de datasets e modelos, relevantes ao contexto de IA/ML. |
-| Herwanto et al. (2024), [*Toward a Holistic Privacy Requirements Engineering Process*](https://doi.org/10.1109/ACCESS.2024.3380888) e Kosenkov et al. (2026), [*Privacy by design*](https://doi.org/10.1016/j.infsof.2025.107946) | Situam privacidade e requisitos de software no campo de engenharia de software. |
-| Kapitsaki (2026), [*Regulatory compliance-readiness in the AI Supply Chain*](https://arxiv.org/abs/2607.03310) | Estudo relacionado a documentação e conformidade em repositórios do Hugging Face. |
-| Kapitsaki et al. (2026), [*Analyzing developer discussions on EU and US privacy legislation compliance in GitHub repositories*](https://doi.org/10.1016/j.infsof.2026.108252) | Trabalho relacionado à análise de discussões sobre legislação de privacidade no GitHub; inclui um [pacote de replicação](https://github.com/gkapi/github-privacy-law-issues-analysis). |
+| Amershi et al. (2019) | Contextualiza práticas e etapas de engenharia de software para ML, relacionadas ao foco de RQ3. |
+| Cohen (1960) | Referência sobre concordância em categorias nominais. |
+| Cochran (1977) | Fundamenta o cálculo do tamanho da amostra com correção para população finita. |
+| Gebru et al. (2021) e Mitchell et al. (2019) | Referências sobre documentação de datasets e modelos no contexto de IA/ML. |
+| Herwanto et al. (2024) e Kosenkov et al. (2026) | Situam privacidade e requisitos de software no campo de engenharia de software. |
+| Kapitsaki (2026), preprint | Estudo relacionado à documentação e à conformidade em repositórios do Hugging Face. |
+| Kapitsaki et al. (2026) | Trabalho relacionado à análise de discussões sobre legislação de privacidade no GitHub; inclui um [pacote de replicação](https://github.com/gkapi/github-privacy-law-issues-analysis). |
 
 ## Apoio
 
